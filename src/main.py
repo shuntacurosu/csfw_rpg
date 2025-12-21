@@ -63,8 +63,29 @@ def load_rules(runner, rules_file, concepts_map):
                         static_payload = action_data.get("payload", {})
                         
                         # Define mapper
-                        def make_mapper(p):
-                            return lambda event: p
+                        def make_mapper(static_p):
+                            def mapper(event):
+                                resolved = {}
+                                for k, v in static_p.items():
+                                    if isinstance(v, str) and v.startswith("event."):
+                                        attr = v.split(".", 1)[1]
+                                        # Try to get from event data (dict) or attribute
+                                        if hasattr(event, attr):
+                                            resolved[k] = getattr(event, attr)
+                                        elif hasattr(event, "payload") and isinstance(event.payload, dict) and attr in event.payload:
+                                            # If event is generic
+                                            resolved[k] = event.payload[attr]
+                                        else:
+                                            # Fallback to direct attribute access if it's a Pydantic model
+                                            try:
+                                                resolved[k] = getattr(event, attr)
+                                            except AttributeError:
+                                                print(f"Warning: Could not resolve {v} from event {event}")
+                                                resolved[k] = None
+                                    else:
+                                        resolved[k] = v
+                                return resolved
+                            return mapper
                         
                         ai = ActionInvocation(
                             target_concept=target_obj,
@@ -92,19 +113,30 @@ def load_rules(runner, rules_file, concepts_map):
              runner.synchronizations.extend(data["synchronizations"])
 
 
-def main():
-    runner = Runner()
+def get_runner():
+    # Initialize Runner with RDF Logging
+    try:
+        from cs_framework.logging.logger import RDFLogger
+        # Optimize logger: Disable by default for gameplay smoothness. 
+        # Uncomment to enable for debugging.
+        # logger = RDFLogger(log_file="execution.ttl", console_output=False, save_interval=10.0)
+        logger = None
+    except ImportError:
+        print("Could not import RDFLogger, logging disabled.")
+        logger = None
+
+    runner = Runner(logger=logger)
+    
+    # Initialize Concepts
+    gl = GameLoop("GameLoop")
+    inp = InputSystem("InputSystem")
+    ms = MapSystem("MapSystem")
+    pl = Player("Player")
+    npc = NpcSystem("NpcSystem")
+    btl = BattleSystem("BattleSystem")
+    gs = GameState("GameState")
     
     # Register Concepts
-    # Assuming the concepts are singletons for this runner
-    gl = GameLoop()
-    inp = InputSystem()
-    ms = MapSystem()
-    pl = Player()
-    npc = NpcSystem()
-    btl = BattleSystem()
-    gs = GameState()
-
     runner.register(gl)
     runner.register(inp)
     runner.register(ms)
@@ -129,14 +161,28 @@ def main():
 
     # Load Rules
     load_rules(runner, "src/sync/rules.yaml", concepts_map)
-
-    # Start Game
-    # Triggers GameLoop.init. 
-    # Since we don't have a rule for "Start" -> "GameLoop.init", we call it manually to bootstrap.
-    gl.init({})
     
-    # Run the Pyxel loop (blocking)
-    gl.run({})
+    return runner
+
+def main():
+    runner = get_runner()
+    
+    # Find GameLoop to run it
+    # We know the ID or Name. Since we just created it, we can search by name or logic.
+    gl = None
+    for c in runner.concepts.values():
+        if isinstance(c, GameLoop):
+            gl = c
+            break
+            
+    if gl:
+        # Start Game
+        # Triggers GameLoop.init. 
+        # This will block until window is closed.
+        gl.init({})
+        gl.run({})
+    else:
+        print("GameLoop concept not found.")
 
 if __name__ == "__main__":
     main()

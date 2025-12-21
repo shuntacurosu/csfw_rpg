@@ -1,0 +1,12 @@
+- type: dispatch
+  target: InputSystem
+  action: check_input
+  payload: {}
+
+- type: wait
+  ticks: 1
+
+- type: assert_state
+  target: Player
+  expected_state:
+    x: 122

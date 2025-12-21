@@ -1,0 +1,28 @@
+{
+    "npcs": [
+        {
+            "id": 1,
+            "map_id": 0,
+            "x": 100,
+            "y": 100,
+            "sprite_u": 0,
+            "sprite_v": 32,
+            "dialog": [
+                "Hello traveler!",
+                "Welcome to our village."
+            ]
+        },
+        {
+            "id": 2,
+            "map_id": 0,
+            "x": 150,
+            "y": 80,
+            "sprite_u": 0,
+            "sprite_v": 32,
+            "dialog": [
+                "Have you seen the slime?",
+                "It's scary!"
+            ]
+        }
+    ]
+}

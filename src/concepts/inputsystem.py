@@ -4,8 +4,8 @@ from typing import Any, Dict
 
 
 class MoveEvent(BaseModel):
-    # TODO: Define fields for Move
-    pass
+    dx: int
+    dy: int
 
 class ActionEvent(BaseModel):
     # TODO: Define fields for Action

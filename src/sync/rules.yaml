@@ -12,6 +12,9 @@ synchronizations:
         action: change_state
         payload:
           state: "EXPLORING"
+      - target: NpcSystem
+        action: load # Load NPCs on init
+        payload: {}
 
   - name: GameLoopUpdate
     when:
@@ -27,10 +30,32 @@ synchronizations:
       event: Move
     then:
       - target: Player
-        action: move
+        action: initiate_move # Request move first
         payload:
           dx: event.dx
           dy: event.dy
+
+  - name: CheckCollision
+    when:
+      source: Player
+      event: CheckCollision
+    then:
+      - target: MapSystem
+        action: validate_move
+        payload:
+          x: event.x
+          y: event.y
+
+  - name: ConfirmMovement
+    when:
+      source: MapSystem
+      event: MoveValid
+    then:
+      - target: Player
+        action: confirm_move
+        payload:
+          x: event.x
+          y: event.y
 
   - name: HandleAction
     when:
@@ -40,28 +65,33 @@ synchronizations:
       - target: Player
         action: interact
 
-  - name: PlayerMoved
+  - name: PlayerInteraction
     when:
       source: Player
-      event: Moved
+      event: InteractionAttempt
     then:
-      - target: MapSystem
-        action: check_collision # Verify if this is how collision check is intended? 
-        # Actually collision check should happen BEFORE move completion?
-        # CSFW actions are usually reactive. 
-        # Maybe Player.move calls MapSystem?
-        # Or better: Input -> Player.move(dx, dy) -> checks collision inside logic or emits "AttemptMove"
-        # For simplicity, let's assume Player logic checks collision using MapSystem (via query or method call? But Concepts separate...)
-        # In CSFW, concepts shouldn't directly call each other.
-        # So Player needs Map data or MapSystem needs to validate.
-        # Option A: Player action `move` emits `RequestMove`. MapSystem listens `RequestMove` -> checks -> emits `MoveAllowed`. Player listens `MoveAllowed` -> updates pos -> emits `Moved`.
-        # Option B: Player has access to map data (via shared resource or payload).
-        # Let's stick to simple: Player `move` logic will optimistically update or we implement the proper request/response loop later. 
-        # For now, let's assume Player handles its position. Collision will be added later.
-        action: check_collision # Just to trigger potential triggers (encounters etc) or Map checks.
+      - target: NpcSystem
+        action: check_interaction
         payload:
           x: event.x
           y: event.y
+          w: event.w
+          h: event.h
+
+
+
+  - name: RegisterNpcObstacle
+    when:
+      source: NpcSystem
+      event: NpcSpawned
+    then:
+      - target: MapSystem
+        action: register_obstacle
+        payload:
+          x: event.x
+          y: event.y
+          w: 16 # hardcoded assumption
+          h: 16
 
   - name: GameLoopDraw
     when:

@@ -76,22 +76,29 @@ class GameLoop(Concept):
 
     def _update_wrapper(self):
         # This method is called by Pyxel every frame
-        # We emit an Update event.
+        # Process pending events to reduce latency (input -> move -> collision)
+        # We loop a fixed number of times to handle causal chains within the frame
+        # independently of the queue size access which caused a crash.
+        # process_events() is safe to call even if empty.
+        limit = 5
+        if hasattr(self, "runner") and self.runner:
+            for _ in range(limit):
+                self.runner.process_events()
+        
+        # Then emit update
         self.emit("Update", {})
-        # Drive the CSFW engine
-        if hasattr(self, "runner") and self.runner:
-             self.runner.process_events()
-        else:
-             # Fallback if runner hook is different
-             pass
-
+        
     def _draw_wrapper(self):
+        # Clear screen
         import pyxel
-        # print("GameLoop.draw_wrapper")
         pyxel.cls(0)
+        
+        # Emit Draw
         self.emit("Draw", {})
-        # Process draw events immediately!
+        
+        # Process any immediate draw events
         if hasattr(self, "runner") and self.runner:
+             # Just one pass related to draw
              self.runner.process_events()
 
     def update(self, payload: dict):
