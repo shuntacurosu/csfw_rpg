@@ -12,6 +12,9 @@ class MoveValidEvent(BaseModel):
     x: float
     y: float
 
+class BattleStartedEvent(BaseModel):
+    enemies: Any # List of enemy IDs
+
 class MapSystem(Concept):
     """
     Concept: MapSystem
@@ -20,7 +23,7 @@ class MapSystem(Concept):
     __events__ = {
         "MoveValid": MoveValidEvent,
         "MapLoaded": MapLoadedEvent,
-        "BattleStarted": BaseModel 
+        "BattleStarted": BattleStartedEvent 
     }
 
     def __init__(self, name: str = "MapSystem"):
@@ -163,6 +166,7 @@ class MapSystem(Concept):
         Action: check_encounter
         """
         import random
+        # print(f"MapSystem: check_encounter called with {payload}")
         x = payload.get("x")
         y = payload.get("y")
         
@@ -171,6 +175,7 @@ class MapSystem(Concept):
         
         # Base rate
         base_rate = current_map.get("encounter_rate", 0.0)
+        # print(f"[MapSystem] check_encounter for Map {self.current_map_id}. Base Rate: {base_rate}")
         if base_rate <= 0: return
 
         # Tile Type Modifiers
@@ -193,23 +198,25 @@ class MapSystem(Concept):
         enemies = []
         
         if tile_id in [4]: # Forest
-            chance = 0.30
+            chance = 0.15
             enemies = ["Wolf", "Spider"]
         elif tile_id in [5]: # Desert
-            chance = 0.20
+            chance = 0.10
             enemies = ["Scorpion", "Snake"]
         elif tile_id in [0, 3]: # Plains/Path
-            chance = 0.10
+            chance = 0.05
             enemies = ["Slime", "Bat"]
         elif tile_id == 7: # Village Icon
             chance = 0.0
         else:
-            chance = 0.10
+            chance = 0.05
             enemies = ["Slime"]
             
         if random.random() < chance:
-            # print(f"Encounter! Tile: {tile_id} Chance: {chance}")
             self.emit("BattleStarted", {"enemies": enemies})
+        else:
+            # print(f"Encounter Check: Map {self.current_map_id} Pos ({tx},{ty}) Tile {tile_id} - Chance {chance} - Failed")
+            pass
 
     def register_obstacle(self, payload: dict):
         """

@@ -101,9 +101,12 @@ class BattleSystem(Concept):
         Action: handle_input
         Triggered by InputSystem.BattleCommand
         """
-        if not self.active_battle: return
+        if not self.active_battle: 
+            print("[BattleSystem] handle_input IGNORED (not active)")
+            return
         
         cmd = payload.get("command") # Attack, Skill, Escape
+        print(f"[BattleSystem] ACTION RECEIVED: {cmd}")
         if cmd == "Escape":
             self.active_battle = False
             self.emit("BattleEnded", {"result": "ESCAPE", "xp": 0})
@@ -117,6 +120,7 @@ class BattleSystem(Concept):
         """
         entity = payload.get("entity")
         action = payload.get("action")
+        print(f"[BattleSystem] Processing turn for {entity}: {action}")
         
         if entity == "Player":
             # Player ATK vs Enemy DEF
@@ -161,6 +165,9 @@ class BattleSystem(Concept):
         """
         import pyxel
         if self.active_battle:
+            # Reset camera for UI
+            pyxel.camera(0, 0)
+            
             # Draw battle overlay
             pyxel.rect(0, 0, 256, 256, 0) # Black BG
             pyxel.text(100, 20, "BATTLE START!", 7)

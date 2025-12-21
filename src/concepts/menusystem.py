@@ -117,6 +117,9 @@ class MenuSystem(Concept):
         if not self.active: return
         import pyxel
         
+        # Reset camera for UI
+        pyxel.camera(0, 0)
+        
         # Draw Window (Screen Center)
         x, y, w, h = 64, 32, 128, 128
         pyxel.rect(x, y, w, h, 0) # Black bg

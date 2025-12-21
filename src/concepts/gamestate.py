@@ -25,7 +25,5 @@ class GameState(Concept):
         """
         new_state = payload.get("state")
         if new_state and new_state != self.current_state:
-            print(f"GameState: {self.current_state} -> {new_state}")
             self.current_state = new_state
             self.emit("StateChanged", {"state": new_state})
-

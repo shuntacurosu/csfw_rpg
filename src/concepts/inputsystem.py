@@ -16,7 +16,7 @@ class CancelEvent(BaseModel):
     pass
 
 class BattleCommandEvent(BaseModel):
-    command_idx: int
+    command: str
 
 class MenuInputEvent(BaseModel):
     key: str
@@ -73,11 +73,14 @@ class InputSystem(Concept):
                 
         elif self.current_state == "BATTLE":
              if pyxel.btnp(pyxel.KEY_1):
-                 self.emit("BattleCommand", {"command_idx": 1}) # Attack
+                 print("[InputSystem] BattleCommand: Attack")
+                 self.emit("BattleCommand", {"command": "Attack"}) 
              elif pyxel.btnp(pyxel.KEY_2):
-                 self.emit("BattleCommand", {"command_idx": 2}) # Skill
+                 print("[InputSystem] BattleCommand: Skill")
+                 self.emit("BattleCommand", {"command": "Skill"}) 
              elif pyxel.btnp(pyxel.KEY_3):
-                 self.emit("BattleCommand", {"command_idx": 3}) # Escape
+                 print("[InputSystem] BattleCommand: Escape")
+                 self.emit("BattleCommand", {"command": "Escape"}) 
 
         elif self.current_state == "MENU":
             if pyxel.btnp(pyxel.KEY_UP): 

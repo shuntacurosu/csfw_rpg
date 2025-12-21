@@ -164,7 +164,7 @@ synchronizations:
       - target: BattleSystem
         action: handle_input
         payload:
-          command_idx: event.command_idx
+          command: event.command
 
   - name: HandleBattleEnd
     when:
