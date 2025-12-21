@@ -43,6 +43,7 @@ class InputSystem(Concept):
         Action: update_state
         """
         self.current_state = payload.get("state", "EXPLORING")
+        print(f"InputSystem state: {self.current_state}")
 
     def check_input(self, payload: dict):
         """
@@ -82,7 +83,7 @@ class InputSystem(Concept):
                  print("[InputSystem] BattleCommand: Escape")
                  self.emit("BattleCommand", {"command": "Escape"}) 
 
-        elif self.current_state == "MENU":
+        elif self.current_state == "MENU" or self.current_state == "SHOP":
             if pyxel.btnp(pyxel.KEY_UP): 
                 self.emit("MenuInput", {"key": "UP"})
             elif pyxel.btnp(pyxel.KEY_DOWN): 
@@ -91,4 +92,8 @@ class InputSystem(Concept):
                 self.emit("MenuInput", {"key": "CONFIRM"})
             elif pyxel.btnp(pyxel.KEY_X) or pyxel.btnp(pyxel.KEY_M): 
                 self.emit("MenuInput", {"key": "CANCEL"})
+
+        elif self.current_state == "DIALOG":
+            if pyxel.btnp(pyxel.KEY_Z) or pyxel.btnp(pyxel.KEY_X) or pyxel.btnp(pyxel.KEY_SPACE):
+                self.emit("Action", {}) # Close/Advance Dialog
 

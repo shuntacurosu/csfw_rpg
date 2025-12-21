@@ -72,6 +72,7 @@ synchronizations:
           y: event.y
 
   - name: HandleAction
+    condition: "get_concept('GameState').current_state == 'EXPLORING'"
     when:
       source: InputSystem
       event: Action
@@ -170,6 +171,12 @@ synchronizations:
     when:
       source: BattleSystem
       event: BattleEnded
+    then: [] # Wait for acknowledgement
+
+  - name: HandleBattleAcknowledge
+    when:
+      source: BattleSystem
+      event: ResultAcknowledged
     then:
       - target: GameState
         action: change_state
@@ -273,5 +280,113 @@ synchronizations:
           action: draw
         - target: BattleSystem
           action: draw
+        - target: ShopSystem
+          action: draw
         - target: MenuSystem
           action: draw
+
+  - name: HandleDialogOpen
+    when:
+      source: NpcSystem
+      event: DialogStarted
+    then:
+      - target: GameState
+        action: change_state
+        payload:
+          state: "DIALOG"
+
+  - name: HandleShopStart
+    condition: "event.npc_id in [3, 6]"
+    when:
+      source: NpcSystem
+      event: DialogEnded
+    then:
+      - target: GameState
+        action: change_state
+        payload:
+          state: "SHOP"
+      - target: ShopSystem
+        action: open_shop
+        payload:
+          npc_id: event.npc_id
+
+  - name: HandleDialogForward
+    condition: "get_concept('GameState').current_state == 'DIALOG'"
+    when:
+      source: InputSystem
+      event: Action
+    then:
+      - target: NpcSystem
+        action: advance_dialog
+
+  - name: HandleDialogClose
+    when:
+      source: NpcSystem
+      event: DialogEnded
+    then:
+      - target: GameState
+        action: change_state
+        payload:
+          state: "EXPLORING"
+      - target: NpcSystem
+        action: clear_dialog
+
+  - name: HandleShopInput
+    when:
+      source: InputSystem
+      event: MenuInput
+    then:
+      - target: ShopSystem
+        action: handle_input
+        payload:
+          key: event.key
+
+  - name: HandleItemBought
+    when:
+      source: ShopSystem
+      event: ItemBought
+    then:
+      - target: Player
+        action: add_to_inventory
+        payload:
+          item: event.item
+
+  - name: HandleShopClose
+    when:
+      source: ShopSystem
+      event: ShopClosed
+    then:
+      - target: GameState
+        action: change_state
+        payload:
+          state: "EXPLORING"
+
+  - name: HandleBattleVictory
+    condition: "event.result == 'WIN'"
+    when:
+      source: BattleSystem
+      event: BattleEnded
+    then:
+      - target: Player
+        action: add_xp
+        payload:
+          amount: event.xp
+
+  - name: HandleLevelUpNotification
+    when:
+      source: Player
+      event: LevelUp
+    then:
+      - target: BattleSystem
+        action: notify_levelup
+
+  - name: HandleEquip
+    when:
+      source: MenuSystem
+      event: EquipItem
+    then:
+      - target: Player
+        action: equip_item
+        payload:
+          slot: event.slot
+          item: event.item

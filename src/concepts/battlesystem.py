@@ -8,6 +8,7 @@ class BattlestartedEvent(BaseModel):
 
 class BattleendedEvent(BaseModel):
     result: str # WIN/LOSE/ESCAPE
+    xp: int
 
 class TurnactionEvent(BaseModel):
     entity: str
@@ -32,6 +33,8 @@ class BattleSystem(Concept):
         self.log_message = ""
         self.turn_order = []
         self.current_turn_index = 0
+        self.waiting_for_ack = False
+        self.is_levelup = False
         
         # Player Stats Cache
         self.player_stats = {
@@ -39,9 +42,7 @@ class BattleSystem(Concept):
         }
 
     def load(self, payload: dict):
-        """
-        Action: load
-        """
+        """Action: load"""
         import os
         import json
         base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
@@ -53,20 +54,18 @@ class BattleSystem(Concept):
                 print(f"Loaded {len(self.enemy_templates)} enemy types")
 
     def update_player_stats(self, payload: dict):
-        """
-        Action: update_player_stats
-        """
+        """Action: update_player_stats"""
         self.player_stats.update(payload)
         print(f"BattleSystem updated player stats: {self.player_stats}")
 
     def start_battle(self, payload: dict):
-        """
-        Action: start_battle
-        """
+        """Action: start_battle"""
         enemy_names = payload.get("enemies", [])
         self.active_battle = True
         self.log_message = "Battle Start!"
         self.enemies = []
+        self.waiting_for_ack = False
+        self.is_levelup = False
         
         for name in enemy_names:
             template = self.enemy_templates.get(name)
@@ -84,17 +83,21 @@ class BattleSystem(Concept):
                 })
         
         # Determine Turn Order (Speed based)
-        # For simplicity, Player always goes first for now unless we do initiative roll
         self.turn_order = ["Player"] + [f"Enemy:{i}" for i in range(len(self.enemies))]
         self.current_turn_index = 0
         self.log_message = f"Enemies: {', '.join([e['name'] for e in self.enemies])}"
 
+    def notify_levelup(self, payload: dict):
+        """Action: notify_levelup"""
+        self.is_levelup = True
+        print("[BattleSystem] Level Up Notification Received")
+
     def end_battle(self, payload: dict):
-        """
-        Action: end_battle
-        """
+        """Action: end_battle"""
         self.active_battle = False
-        self.log_message = ""
+        self.enemies = []
+        self.waiting_for_ack = False
+        self.is_levelup = False
         
     def handle_input(self, payload: dict):
         """
@@ -102,13 +105,19 @@ class BattleSystem(Concept):
         Triggered by InputSystem.BattleCommand
         """
         if not self.active_battle: 
-            print("[BattleSystem] handle_input IGNORED (not active)")
             return
-        
+
+        if self.waiting_for_ack:
+            # Any command acknowledges
+            print("[BattleSystem] Result Acknowledged")
+            self.emit("ResultAcknowledged", {})
+            return
+
         cmd = payload.get("command") # Attack, Skill, Escape
         print(f"[BattleSystem] ACTION RECEIVED: {cmd}")
         if cmd == "Escape":
-            self.active_battle = False
+            self.log_message = "Escaped safely!"
+            self.waiting_for_ack = True
             self.emit("BattleEnded", {"result": "ESCAPE", "xp": 0})
         elif cmd in ["Attack", "Skill"]:
              # Player Action
@@ -124,6 +133,7 @@ class BattleSystem(Concept):
         
         if entity == "Player":
             # Player ATK vs Enemy DEF
+            if not self.enemies: return
             target = self.enemies[0] # Target first for now
             
             damage = 0
@@ -149,14 +159,13 @@ class BattleSystem(Concept):
             # Win!
             total_xp = sum([e.get("xp_reward", 0) for e in self.enemies]) 
             
-            self.enemies = []
-            self.log_message = "VICTORY!"
+            # Keep enemies for rendering until ACK
+            self.log_message = f"VICTORY! Gained {total_xp} XP"
+            self.waiting_for_ack = True
             self.emit("BattleEnded", {"result": "WIN", "xp": total_xp})
         else:
             self.enemies = active_enemies
             # Enemy Turn (Simple)
-            # ... Enemy attacks player ...
-            # For now just log
             pass
             
     def draw(self, payload: dict):
@@ -169,24 +178,34 @@ class BattleSystem(Concept):
             pyxel.camera(0, 0)
             
             # Draw battle overlay
-            pyxel.rect(0, 0, 256, 256, 0) # Black BG
-            pyxel.text(100, 20, "BATTLE START!", 7)
+            pyxel.rect(0, 0, 256, 120, 0) # Black BG Top half
+            pyxel.text(100, 10, "BATTLE!", 7)
             
             # Draw Message
             if hasattr(self, "log_message"):
-                 pyxel.text(10, 40, self.log_message, 9)
+                 pyxel.text(10, 30, self.log_message, 9)
+            
+            if self.is_levelup:
+                 pyxel.text(10, 45, "LEVEL UP!!", 10)
+            
+            if self.waiting_for_ack:
+                 pyxel.text(80, 110, "PRESS ANY KEY TO CONTINUE", pyxel.frame_count % 20 > 10 and 7 or 6)
 
             # Draw enemies
             for i, enemy in enumerate(self.enemies):
-                x = 50 + i*60
-                y = 100
-                pyxel.rect(x, y, 16, 16, 8) # Sprite placeholder
-                pyxel.text(x, y+20, f"{enemy['name']}", 7)
+                x = 40 + i*60
+                y = 60
+                pyxel.rect(x, y, 16, 16, 8) # Placeholder or sprite
+                pyxel.text(x, y+18, enemy['name'], 7)
                 # HP Bar
+                bar_w = 24
                 hp_pct = max(0, enemy["hp"]) / enemy["max_hp"]
-                pyxel.rect(x, y+30, 20, 4, 1) # Red bg
-                pyxel.rect(x, y+30, int(20 * hp_pct), 4, 11) # Green fg
-                pyxel.text(x+22, y+29, f"{enemy['hp']}", 7)
+                pyxel.rect(x, y+26, bar_w, 3, 1) # Red
+                pyxel.rect(x, y+26, int(bar_w * hp_pct), 3, 11) # Green
+                pyxel.text(x, y+30, f"HP:{max(0, int(enemy['hp']))}", 7)
+            
+            # Player status
+            pyxel.text(10, 100, f"Hero HP: {self.player_stats['hp']}/{self.player_stats['max_hp']}", 7)
             
             # Draw UI
             pyxel.rect(10, 180, 236, 60, 1) # Dark blue menu

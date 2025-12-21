@@ -14,6 +14,7 @@ from concepts.battlesystem import BattleSystem
 from concepts.gamestate import GameState
 from concepts.camerasystem import CameraSystem
 from concepts.menusystem import MenuSystem
+from concepts.shopsystem import ShopSystem
 
 try:
     from cs_framework.engine.runner import Runner
@@ -37,6 +38,16 @@ def load_rules(runner, rules_file, concepts_map):
                 print("Could not import synchronization primitives.")
                 return
 
+            # Define Conditional wrapper once
+            class ConditionalSynchronization(Synchronization):
+                def __init__(self, name, when, then, cond_fn=None):
+                    super().__init__(name, when, then)
+                    self.cond_fn = cond_fn
+                def execute(self, event):
+                    if self.cond_fn and not self.cond_fn(event):
+                        return []
+                    return super().execute(event)
+
             for sync_data in data["synchronizations"]:
                 try:
                     # Parse 'when'
@@ -52,43 +63,36 @@ def load_rules(runner, rules_file, concepts_map):
                         event_name=when_data["event"]
                     )
                     
+                    # Define mapper factory
+                    def make_mapper(static_p):
+                        def mapper(event):
+                            resolved = {}
+                            for k, v in static_p.items():
+                                if isinstance(v, str) and v.startswith("event."):
+                                    attr = v.split(".", 1)[1]
+                                    val = None
+                                    if isinstance(event, dict) and attr in event:
+                                        val = event[attr]
+                                    elif hasattr(event, attr):
+                                        val = getattr(event, attr)
+                                    elif hasattr(event, "payload") and isinstance(event.payload, dict) and attr in event.payload:
+                                        val = event.payload[attr]
+                                    resolved[k] = val
+                                else:
+                                    resolved[k] = v
+                            return resolved
+                        return mapper
+
                     # Parse 'then'
                     then_objs = []
-                    for action_data in sync_data["then"]:
-                        target_name = action_data["target"]
+                    for action_data in sync_data.get("then", []):
+                        target_name = action_data.get("target")
                         target_obj = concepts_map.get(target_name)
                         if not target_obj:
                              print(f"Error: Unknown concept '{target_name}' in rule '{sync_data['name']}'")
                              continue
-                             
-                        # ActionInvocation expects: target_concept, action_name, payload_mapper
+                        
                         static_payload = action_data.get("payload", {})
-                        
-                        # Define mapper
-                        def make_mapper(static_p):
-                            def mapper(event):
-                                resolved = {}
-                                for k, v in static_p.items():
-                                    if isinstance(v, str) and v.startswith("event."):
-                                        attr = v.split(".", 1)[1]
-                                        # Try to get from event data (dict) or attribute
-                                        if hasattr(event, attr):
-                                            resolved[k] = getattr(event, attr)
-                                        elif hasattr(event, "payload") and isinstance(event.payload, dict) and attr in event.payload:
-                                            # If event is generic
-                                            resolved[k] = event.payload[attr]
-                                        else:
-                                            # Fallback to direct attribute access if it's a Pydantic model
-                                            try:
-                                                resolved[k] = getattr(event, attr)
-                                            except AttributeError:
-                                                print(f"Warning: Could not resolve {v} from event {event}")
-                                                resolved[k] = None
-                                    else:
-                                        resolved[k] = v
-                                return resolved
-                            return mapper
-                        
                         ai = ActionInvocation(
                             target_concept=target_obj,
                             action_name=action_data["action"],
@@ -96,15 +100,61 @@ def load_rules(runner, rules_file, concepts_map):
                         )
                         then_objs.append(ai)
                     
-                    # Create Synchronization
-                    sync_obj = Synchronization(
-                        name=sync_data["name"],
-                        when=when_obj,
-                        then=then_objs
-                    )
+                    # Parse condition
+                    condition_str = sync_data.get("condition")
+                    if condition_str:
+                        class AttrDict:
+                            def __init__(self, obj):
+                                self._obj = obj
+                            def __getattr__(self, name):
+                                if isinstance(self._obj, dict) and name in self._obj:
+                                    return self._obj[name]
+                                if hasattr(self._obj, "payload") and isinstance(self._obj.payload, dict) and name in self._obj.payload:
+                                    return self._obj.payload[name]
+                                if hasattr(self._obj, name):
+                                    return getattr(self._obj, name)
+                                return None
+
+                        def get_concept_helper(name):
+                            return concepts_map.get(name)
+
+                        def condition_fn(event, runner=runner, condition_str=condition_str):
+                            try:
+                                ctx = {
+                                    "event": AttrDict(event),
+                                    "runner": runner,
+                                    "concepts": concepts_map,
+                                    "get_concept": get_concept_helper
+                                }
+                                # We allow some basic builtins for string/int operations
+                                safe_builtins = {
+                                    "len": len,
+                                    "int": int,
+                                    "str": str,
+                                    "list": list,
+                                    "dict": dict
+                                }
+                                return eval(condition_str, {"__builtins__": safe_builtins}, ctx)
+                            except Exception as e:
+                                # if condition_str:
+                                #     print(f"Error evaluating condition '{condition_str}': {e}")
+                                return False
+
+                        sync_obj = ConditionalSynchronization(
+                            name=sync_data["name"],
+                            when=when_obj,
+                            then=then_objs,
+                            cond_fn=condition_fn
+                        )
+                    else:
+                        sync_obj = Synchronization(
+                            name=sync_data["name"],
+                            when=when_obj,
+                            then=then_objs
+                        )
                     
                     runner.register(sync_obj)
-                    print(f"Loaded synchronization: {sync_data['name']}")
+                    print(f"Loaded synchronization: {sync_data['name']} (Condition: {condition_str})")
                 except Exception as e:
                     print(f"Failed to load rule {sync_data.get('name')}: {e}")
                 
@@ -125,42 +175,45 @@ def get_runner():
     runner = Runner(logger=logger)
     
     # Initialize Concepts
-    gl = GameLoop("GameLoop")
-    inp = InputSystem("InputSystem")
-    ms = MapSystem("MapSystem")
-    pl = Player("Player")
-    npc = NpcSystem("NpcSystem")
-    btl = BattleSystem("BattleSystem")
-    gs = GameState("GameState")
-    cam = CameraSystem("CameraSystem")
-    menu = MenuSystem("MenuSystem")
+    loop = GameLoop("GameLoop")
+    input_sys = InputSystem("InputSystem")
+    map_sys = MapSystem("MapSystem")
+    player = Player("Player")
+    npc_sys = NpcSystem("NpcSystem")
+    battle_sys = BattleSystem("BattleSystem")
+    game_state = GameState("GameState")
+    cam_sys = CameraSystem("CameraSystem")
+    menu_sys = MenuSystem("MenuSystem")
+    shop_sys = ShopSystem("ShopSystem")
     
     # Register Concepts
-    runner.register(gl)
-    runner.register(inp)
-    runner.register(ms)
-    runner.register(pl)
-    runner.register(npc)
-    runner.register(btl)
-    runner.register(gs)
-    runner.register(cam)
-    runner.register(menu)
+    runner.register(loop)
+    runner.register(input_sys)
+    runner.register(map_sys)
+    runner.register(player)
+    runner.register(npc_sys)
+    runner.register(battle_sys)
+    runner.register(game_state)
+    runner.register(cam_sys)
+    runner.register(menu_sys)
+    runner.register(shop_sys)
     
     # Concept Map for Rule Loading
     concepts_map = {
-        "GameLoop": gl,
-        "InputSystem": inp,
-        "MapSystem": ms,
-        "Player": pl,
-        "NpcSystem": npc,
-        "BattleSystem": btl,
-        "GameState": gs,
-        "CameraSystem": cam,
-        "MenuSystem": menu
+        "GameLoop": loop,
+        "InputSystem": input_sys,
+        "MapSystem": map_sys,
+        "Player": player,
+        "NpcSystem": npc_sys,
+        "BattleSystem": battle_sys,
+        "GameState": game_state,
+        "CameraSystem": cam_sys,
+        "MenuSystem": menu_sys,
+        "ShopSystem": shop_sys
     }
     
     # Inject runner into GameLoop so it can drive the loop
-    gl.runner = runner
+    loop.runner = runner
 
     # Load Rules
     load_rules(runner, "src/sync/rules.yaml", concepts_map)

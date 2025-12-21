@@ -95,58 +95,105 @@ class MenuSystem(Concept):
                 self.close({})
             elif selection == "Status":
                 self.state = "STATUS"
+                self.cursor = 0
             elif selection == "Items":
                 self.state = "ITEMS"
                 self.cursor = 0
             elif selection == "Equipment":
-                self.state = "EQUIP"
+                self.state = "EQUIPMENT"
                 self.cursor = 0
-            elif selection == "Options":
-                self.state = "OPTIONS"
+                self.sub_cursor = 0
+                self.sub_state = "SELECT_SLOT"
+            else:
+                self.state = selection.upper()
+                self.cursor = 0
+                self.sub_cursor = 0
+                self.sub_state = "SELECT_SLOT"
                 
         elif self.state == "ITEMS":
-            if self.inventory:
-                # Use Item
-                pass
-                
-        elif self.state == "EQUIP":
+            # Use item? (Not implemented)
             pass
+                
+        elif self.state == "EQUIPMENT":
+            if self.sub_state == "SELECT_SLOT":
+                self.sub_state = "SELECT_ITEM"
+                self.sub_cursor = 0
+            else:
+                # Actually equip
+                items = self._get_eligible_items()
+                if items:
+                    item = items[self.sub_cursor]
+                    slot = self.equip_slots[self.cursor]
+                    print(f"Equipping {item['name']} to {slot}")
+                    self.emit("EquipItem", {"slot": slot, "item": item})
+                    self.sub_state = "SELECT_SLOT"
+            
+        elif self.state == "OPTIONS":
+            if self.cursor == 0: # Quit Game
+                import pyxel
+                pyxel.quit()
 
     def draw(self, payload: dict):
         """Action: draw"""
         if not self.active: return
         import pyxel
-        
-        # Reset camera for UI
         pyxel.camera(0, 0)
         
-        # Draw Window (Screen Center)
-        x, y, w, h = 64, 32, 128, 128
-        pyxel.rect(x, y, w, h, 0) # Black bg
-        pyxel.rectb(x, y, w, h, 7) # White border
+        # Window
+        x, y, w, h = 40, 20, 176, 180
+        pyxel.rect(x, y, w, h, 0)
+        pyxel.rectb(x, y, w, h, 7)
         
         if self.state == "MAIN":
             pyxel.text(x + 10, y + 10, "-- MENU --", 7)
             for i, item in enumerate(self.menu_items):
-                col = 7
-                if i == self.cursor: col = 8 # Highlight
-                pyxel.text(x + 20, y + 30 + i * 10, item, col)
+                col = 10 if i == self.cursor else 7
+                pyxel.text(x + 20, y + 30 + i * 15, item, col)
                 
         elif self.state == "STATUS":
             s = self.player_stats
             pyxel.text(x + 10, y + 10, "-- STATUS --", 7)
             pyxel.text(x + 10, y + 30, f"Name: Hero", 7)
-            pyxel.text(x + 10, y + 40, f"Level: {s.get('level')}", 7)
-            pyxel.text(x + 10, y + 50, f"XP: {s.get('xp')} / {s.get('next_xp', 100)}", 7)
-            pyxel.text(x + 10, y + 70, f"HP: {s.get('hp')} / {s.get('max_hp')}", 7)
-            pyxel.text(x + 10, y + 80, f"ATK: {s.get('atk')}", 7)
-            pyxel.text(x + 10, y + 90, f"DEF: {s.get('def')}", 7)
-            pyxel.text(x + 10, y + 100, f"SPD: {s.get('spd')}", 7)
+            pyxel.text(x + 10, y + 42, f"Level: {s.get('level')}", 10)
+            pyxel.text(x + 10, y + 54, f"XP: {s.get('xp')} / {s.get('next_xp', 100)}", 13)
+            
+            pyxel.text(x + 10, y + 74, f"HP: {s.get('hp')} / {s.get('max_hp')}", 7)
+            pyxel.text(x + 10, y + 86, f"ATK: {s.get('atk')}", 7)
+            pyxel.text(x + 10, y + 98, f"DEF: {s.get('def_stat', s.get('def'))}", 7)
+            pyxel.text(x + 10, y + 110, f"SPD: {s.get('spd')}", 7)
             
         elif self.state == "ITEMS":
             pyxel.text(x + 10, y + 10, "-- ITEMS --", 7)
             if not self.inventory:
                 pyxel.text(x + 20, y + 30, "(Empty)", 6)
             else:
-                # List items
-                pass
+                for i, item in enumerate(self.inventory):
+                    col = 10 if i == self.cursor else 7
+                    pyxel.text(x + 20, y + 30 + i*10, item["name"], col)
+                    
+        elif self.state == "EQUIPMENT":
+            pyxel.text(x + 10, y + 10, "-- EQUIPMENT --", 7)
+            for i, slot in enumerate(self.equip_slots):
+                col = 10 if (i == self.cursor and self.sub_state == "SELECT_SLOT") else 7
+                item = self.equipment.get(slot)
+                val = item["name"] if item else "---"
+                pyxel.text(x + 10, y + 30 + i*15, f"{slot.capitalize()}:", 6)
+                pyxel.text(x + 60, y + 30 + i*15, val, col)
+
+            if self.sub_state == "SELECT_ITEM":
+                # Draw small selector on right
+                ix, iy = x + 100, y + 30
+                pyxel.rect(ix - 5, iy - 5, 75, 100, 1)
+                pyxel.rectb(ix - 5, iy - 5, 75, 100, 7)
+                items = self._get_eligible_items()
+                if not items:
+                    pyxel.text(ix, iy, "None", 6)
+                else:
+                    for i, item in enumerate(items):
+                        col = 10 if i == self.sub_cursor else 7
+                        pyxel.text(ix, iy + i*12, item["name"], col)
+
+        elif self.state == "OPTIONS":
+            pyxel.text(x + 10, y + 10, "-- OPTIONS --", 7)
+            col = 10 if self.cursor == 0 else 7
+            pyxel.text(x + 20, y + 30, "QUIT GAME", col)

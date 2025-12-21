@@ -42,6 +42,10 @@ class StatChangedEvent(BaseModel):
     xp: int
     next_xp: int
 
+class EquipItemEvent(BaseModel):
+    slot: str
+    item: dict
+
 class Player(Concept):
     """
     Concept: Player
@@ -54,7 +58,8 @@ class Player(Concept):
         "CheckCollision": CheckCollisionEvent,
         "CheckEncounter": CheckEncounterEvent,
         "LevelUp": LevelUpEvent,
-        "StatChanged": StatChangedEvent
+        "StatChanged": StatChangedEvent,
+        "EquipItem": EquipItemEvent
     }
 
     def load(self, payload: dict):
@@ -112,26 +117,72 @@ class Player(Concept):
         self.xp += amount
         print(f"Gained {amount} XP! Total: {self.xp}")
         self._check_level_up()
+        # Ensure stats/XP updated in Menu even if no level up
+        self.recalc_stats()
 
     def _check_level_up(self):
-        # Simple XP Curve: Level * 100
+        # ... (keep existing _check_level_up)
+        # Leveling Growth Table (Lv 1-30)
+        # Stats: [MAX_HP, ATK, DEF, SPD]
+        GROWTH_TABLE = {
+            1: [30, 10, 5, 5],
+            2: [35, 12, 6, 6],
+            3: [42, 15, 8, 7],
+            4: [50, 18, 10, 8],
+            5: [60, 22, 12, 10],
+            6: [72, 26, 15, 12],
+            7: [85, 30, 18, 14],
+            8: [100, 35, 22, 16],
+            9: [120, 42, 26, 18],
+            10: [150, 50, 30, 20],
+            # ... can be expanded to 30 ...
+            30: [1000, 250, 150, 100]
+        }
+        
+        # Linear approximation for missing table values to avoid bloat
+        def get_stat_growth(lv, idx):
+            if lv in GROWTH_TABLE: return GROWTH_TABLE[lv][idx]
+            # Interpolate
+            prev_lv = max([k for k in GROWTH_TABLE.keys() if k < lv])
+            next_lv = min([k for k in GROWTH_TABLE.keys() if k > lv])
+            p_val = GROWTH_TABLE[prev_lv][idx]
+            n_val = GROWTH_TABLE[next_lv][idx]
+            return p_val + (n_val - p_val) * (lv - prev_lv) // (next_lv - prev_lv)
+
         while self.xp >= self.next_level_xp and self.level < 30:
-            self.xp -= self.next_level_xp
+            self.xp = 0 # Reset XP to 0 as requested
             self.level += 1
             self.next_level_xp = self.level * 100
             
-            # Growth Table (Simple linear for now, can be complex table)
-            self.base_max_hp += 5
-            self.base_atk += 2
-            self.base_def += 1
-            self.base_spd += 1
+            # Apply growth from table
+            self.base_max_hp = int(get_stat_growth(self.level, 0))
+            self.base_atk = int(get_stat_growth(self.level, 1))
+            self.base_def = int(get_stat_growth(self.level, 2))
+            self.base_spd = int(get_stat_growth(self.level, 3))
             
             # Heal on Level Up
-            self.hp = self.max_hp
+            self.hp = self.base_max_hp
             self.recalc_stats()
             
-            print(f"LEVEL UP! Now Level {self.level}. Stats: HP{self.max_hp} ATK{self.atk} DEF{self.def_stat}")
+            print(f"LEVEL UP! Hero reached Level {self.level}!")
             self.emit("LevelUp", {"level": self.level})
+
+    def equip_item(self, payload: dict):
+        """Action: equip_item"""
+        slot = payload.get("slot")
+        item = payload.get("item")
+        if slot in self.equipment:
+            self.equipment[slot] = item
+            print(f"Equipped {item['name']} to {slot}")
+            self.recalc_stats()
+
+    def add_to_inventory(self, payload: dict):
+        """Action: add_to_inventory"""
+        item = payload.get("item")
+        if item:
+            self.inventory.append(item)
+            print(f"Player inventory: {[i['name'] for i in self.inventory]}")
+            self.recalc_stats()
 
     def recalc_stats(self):
         # Reset to base
@@ -154,7 +205,7 @@ class Player(Concept):
             "hp": self.hp, 
             "max_hp": self.max_hp, 
             "atk": self.atk, 
-            "def": self.def_stat, 
+            "def_stat": self.def_stat, 
             "spd": self.spd,
             "level": self.level,
             "xp": self.xp,
@@ -186,19 +237,13 @@ class Player(Concept):
         self.emit("CheckEncounter", {"x": self.x, "y": self.y})
 
     def interact(self, payload: dict):
-        """
-        Action: interact
-        """
-        # print("Player.interact called")
-        # Emit an attempt event, passing player's position and size
+        """Action: interact"""
         self.emit("InteractionAttempt", {
             "x": self.x,
             "y": self.y,
             "w": 16,
             "h": 16
         })
-        # TODO: Implement interaction logic (check facing tile)
-        pass
 
     def draw(self, payload: dict):
         """
