@@ -27,7 +27,8 @@ class NpcSystem(Concept):
 
     def __init__(self, name: str = "NpcSystem"):
         super().__init__(name)
-        self.npcs = []
+        self.npcs = [] # All NPCs data
+        self.active_npcs = [] # NPCs on current map
         self.active_dialog = None # (text, timer)
 
     def load(self, payload: dict):
@@ -35,62 +36,40 @@ class NpcSystem(Concept):
         Action: load
         """
         print(f"NpcSystem.load called with {payload}")
-        import json
-        import os
         
-        # Resolve path
-        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-        # Use simple path construction
-        full_path = os.path.join(base_dir, "assets", "data", "npcs.json")
+        # If map_id is provided, filter active NPCs
+        current_map_id = payload.get("map_id")
         
-        if os.path.exists(full_path):
-            try:
-                with open(full_path, 'r') as f:
-                    data = json.load(f)
-                    self.npcs = data.get("npcs", [])
-                    print(f"Loaded {len(self.npcs)} NPCs")
-                    for npc in self.npcs:
-                        self.emit("NpcSpawned", npc)
-            except Exception as e:
-                print(f"Error loading NPCs: {e}")
-        else:
-            print(f"NPC file not found: {full_path}")
-
-
-    def check_interaction(self, payload: dict):
-        """
-        Action: check_interaction
-        Reacts to Player.InteractionAttempt
-        """
-        px = payload.get("x")
-        py = payload.get("y")
-        pw = payload.get("w", 16)
-        ph = payload.get("h", 16)
+        if not self.npcs:
+             # Initial load of data
+             import os
+             import json
+             base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+             npc_file = os.path.join(base_dir, "assets", "data", "npcs.json")
+             
+             if os.path.exists(npc_file):
+                 with open(npc_file, 'r') as f:
+                     self.npcs = json.load(f)
         
-        # Clear dialog if already active (toggle off)
-        if self.active_dialog:
-            self.active_dialog = None
-            return
-
-        # Simple proximity check (center to center distance or overlapping box)
-        # Using interaction radius
-        p_center_x = px + pw/2
-        p_center_y = py + ph/2
-        
-        for npc in self.npcs:
-            nx = npc["x"]
-            ny = npc["y"]
-            n_center_x = nx + 8
-            n_center_y = ny + 8
+        # Filter for current map
+        # Default to map 0 if not specified (initial load)
+        if current_map_id is None:
+            current_map_id = 0
             
-            # Distance
-            dist = ((p_center_x - n_center_x)**2 + (p_center_y - n_center_y)**2)**0.5
-            if dist < 24: # Less than 1.5 tiles away
-                print(f"Interaction with NPC {npc['id']}!")
-                text = npc.get("dialog", ["..."])[0] # Just show first line
-                self.active_dialog = text
-                self.emit("DialogStarted", {"npc_id": npc["id"], "dialog": npc.get("dialog", [])})
-                return
+        self.active_npcs = [npc for npc in self.npcs if npc["map_id"] == current_map_id]
+        print(f"Loaded {len(self.active_npcs)} NPCs for Map {current_map_id}")
+
+        # Emit spawn events for collision
+        for npc in self.active_npcs:
+            self.emit("NpcSpawned", {
+                "id": npc["id"], # Added id for NpcSpawnedEvent
+                "x": npc["x"],
+                "y": npc["y"], 
+                "sprite_u": npc["sprite_u"], # Added sprite_u for NpcSpawnedEvent
+                "sprite_v": npc["sprite_v"], # Added sprite_v for NpcSpawnedEvent
+                "name": str(npc["id"])
+            })
+
 
     def update(self, payload: dict):
         pass

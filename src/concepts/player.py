@@ -25,16 +25,21 @@ class MoveValidEvent(BaseModel):
     x: float
     y: float
 
+class CheckEncounterEvent(BaseModel):
+    x: float
+    y: float
+
 class Player(Concept):
     """
     Concept: Player
-    Emits Events: Moved, InteractionAttempt, CheckCollision
+    Emits Events: Moved, InteractionAttempt, CheckCollision, CheckEncounter
     """
     __events__ = {
         "Moved": MovedEvent,
         "InteractionAttempt": InteractionAttemptEvent,
         "Interacted": InteractedEvent,
-        "CheckCollision": CheckCollisionEvent
+        "CheckCollision": CheckCollisionEvent,
+        "CheckEncounter": CheckEncounterEvent
     }
 
     def __init__(self, name: str = "Player"):
@@ -63,6 +68,8 @@ class Player(Concept):
         self.x = payload.get("x", self.x)
         self.y = payload.get("y", self.y)
         self.emit("Moved", {"x": self.x, "y": self.y})
+        # Trigger encounter check after successful move
+        self.emit("CheckEncounter", {"x": self.x, "y": self.y})
 
     def interact(self, payload: dict):
         """

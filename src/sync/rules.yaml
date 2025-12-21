@@ -24,6 +24,16 @@ synchronizations:
       - target: InputSystem
         action: check_input
 
+  - name: SyncGameStateToInput
+    when:
+      source: GameState
+      event: Changed
+    then:
+      - target: InputSystem
+        action: update_state
+        payload:
+          state: event.state
+
   - name: HandleMovement
     when:
       source: InputSystem
@@ -93,14 +103,122 @@ synchronizations:
           w: 16 # hardcoded assumption
           h: 16
 
+  - name: CheckEncounter
+    when:
+      source: Player
+      event: CheckEncounter
+    then:
+      - target: MapSystem
+        action: check_encounter
+        payload:
+          x: event.x
+          y: event.y
+
+  - name: HandleMapBattle
+    when:
+      source: MapSystem
+      event: BattleStarted
+    then:
+       - target: GameState
+         action: change_state
+         payload:
+           state: "BATTLE"
+       - target: BattleSystem
+         action: start_battle
+         payload:
+           enemies: event.enemies
+
+  - name: HandleMapChangeNPC
+    when:
+      source: MapSystem
+      event: MapLoaded
+    then:
+      - target: NpcSystem
+        action: load
+        payload:
+          map_id: event.map_id
+
+  - name: HandleBattleStart
+    when:
+      source: BattleSystem
+      event: BattleStarted
+    then:
+      - target: GameState
+        action: change_state
+        payload:
+          state: "BATTLE"
+      - target: BattleSystem
+        action: start_battle
+        payload:
+          enemies: event.enemies
+
+  - name: HandleBattleInput
+    when:
+      source: InputSystem
+      event: BattleCommand
+    then:
+      - target: BattleSystem
+        action: handle_input
+        payload:
+          command_idx: event.command_idx
+
+  - name: HandleBattleEnd
+    when:
+      source: BattleSystem
+      event: BattleEnded
+    then:
+      - target: GameState
+        action: change_state
+        payload:
+          state: "EXPLORING"
+      - target: BattleSystem
+        action: end_battle
+
+  - name: HandleTurn
+    when:
+      source: BattleSystem
+      event: TurnAction
+    then:
+      - target: BattleSystem
+        action: process_turn
+        payload:
+          entity: event.entity
+          action: event.action
+
+  - name: HandleCameraMapLoad
+    when:
+      source: MapSystem
+      event: MapLoaded
+    then:
+      - target: CameraSystem
+        action: set_bounds
+        payload:
+          width: event.width
+          height: event.height 
+
+  - name: HandleCameraFollow
+    when:
+      source: Player
+      event: Moved
+    then:
+      - target: CameraSystem
+        action: follow_player
+        payload:
+          x: event.x
+          y: event.y
+
   - name: GameLoopDraw
     when:
       source: GameLoop
       event: Draw
     then:
+      - target: CameraSystem
+        action: apply
       - target: MapSystem
-        action: draw # Assuming MapSystem has draw (Need to add it!)
+        action: draw 
       - target: Player
-        action: draw # Need to add draw action to Player
+        action: draw 
       - target: NpcSystem
-        action: draw # Need to add draw action
+        action: draw 
+      - target: BattleSystem
+        action: draw

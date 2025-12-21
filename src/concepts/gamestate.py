@@ -4,8 +4,7 @@ from typing import Any, Dict
 
 
 class ChangedEvent(BaseModel):
-    # TODO: Define fields for Changed
-    pass
+    state: str
 
 class GameState(Concept):
     """
@@ -18,12 +17,15 @@ class GameState(Concept):
 
     def __init__(self, name: str = "GameState"):
         super().__init__(name)
+        self.current_state = "EXPLORING"
 
     def change_state(self, payload: dict):
         """
         Action: change_state
         """
-        # TODO: Implement logic
-        # self.emit("SomeEvent", {})
-        pass
+        new_state = payload.get("state")
+        if new_state and new_state != self.current_state:
+            print(f"GameState changing from {self.current_state} to {new_state}")
+            self.current_state = new_state
+            self.emit("Changed", {"state": new_state})
 

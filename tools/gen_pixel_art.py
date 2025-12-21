@@ -74,6 +74,28 @@ def create_pixel_art():
     # 3: Path (48,0) - Brown(4) with Orange(9) details
     noise(48, 0, 16, 16, 4, 9, 0.3)
 
+    # 4: Forest (64,0) - Dark Green trees
+    rect(64, 0, 16, 16, 3) # Base Dk Green
+    noise(64, 0, 16, 16, 3, 11, 0.4) # Add lighter green leaves
+    # Tree trunks?
+    rect(64+7, 12, 2, 4, 4) # Brown trunk
+
+    # 5: Desert (80,0) - Yellow/Orange sand
+    rect(80, 0, 16, 16, 10) # Yellow base
+    noise(80, 0, 16, 16, 10, 9, 0.2) # Orange specks
+
+    # 6: Mountain (96,0) - Grey peaks
+    rect(96, 0, 16, 16, 5) # Dk Gray base
+    # Peak
+    for i in range(8):
+        rect(96+8-i, 2+i, i*2+1, 14-i, 6) # Lt Gray mountain shape
+    rect(96+7, 2, 2, 3, 7) # Snowy cap
+
+    # 7: Village Icon (112, 0) - For World Map
+    rect(112, 0, 16, 16, 11) # Grass bg
+    rect(112+4, 4, 8, 8, 4) # House body
+    rect(112+3, 3, 10, 2, 8) # Red roof
+
     # --- Characters (Row 1) ---
     # Hero (0,16) -> Red(8)
     # Body

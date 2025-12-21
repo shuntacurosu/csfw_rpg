@@ -12,6 +12,7 @@ from concepts.player import Player
 from concepts.npcsystem import NpcSystem
 from concepts.battlesystem import BattleSystem
 from concepts.gamestate import GameState
+from concepts.camerasystem import CameraSystem
 
 try:
     from cs_framework.engine.runner import Runner
@@ -112,19 +113,14 @@ def load_rules(runner, rules_file, concepts_map):
         if "synchronizations" in locals() and "data" in locals() and "synchronizations" in data:
              runner.synchronizations.extend(data["synchronizations"])
 
-
 def get_runner():
     # Initialize Runner with RDF Logging
     try:
         from cs_framework.logging.logger import RDFLogger
-        # Optimize logger: Disable by default for gameplay smoothness. 
-        # Uncomment to enable for debugging.
-        # logger = RDFLogger(log_file="execution.ttl", console_output=False, save_interval=10.0)
         logger = None
     except ImportError:
         print("Could not import RDFLogger, logging disabled.")
         logger = None
-
     runner = Runner(logger=logger)
     
     # Initialize Concepts
@@ -135,6 +131,7 @@ def get_runner():
     npc = NpcSystem("NpcSystem")
     btl = BattleSystem("BattleSystem")
     gs = GameState("GameState")
+    cam = CameraSystem("CameraSystem")
     
     # Register Concepts
     runner.register(gl)
@@ -144,6 +141,7 @@ def get_runner():
     runner.register(npc)
     runner.register(btl)
     runner.register(gs)
+    runner.register(cam)
     
     # Concept Map for Rule Loading
     concepts_map = {
@@ -153,7 +151,8 @@ def get_runner():
         "Player": pl,
         "NpcSystem": npc,
         "BattleSystem": btl,
-        "GameState": gs
+        "GameState": gs,
+        "CameraSystem": cam
     }
     
     # Inject runner into GameLoop so it can drive the loop
