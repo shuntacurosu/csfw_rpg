@@ -301,6 +301,8 @@ synchronizations:
       source: NpcSystem
       event: DialogEnded
     then:
+      - target: NpcSystem
+        action: clear_dialog
       - target: GameState
         action: change_state
         payload:
@@ -320,6 +322,7 @@ synchronizations:
         action: advance_dialog
 
   - name: HandleDialogClose
+    condition: "event.npc_id not in [3, 6]"
     when:
       source: NpcSystem
       event: DialogEnded
@@ -332,6 +335,7 @@ synchronizations:
         action: clear_dialog
 
   - name: HandleShopInput
+    condition: "get_concept('GameState').current_state == 'SHOP'"
     when:
       source: InputSystem
       event: MenuInput

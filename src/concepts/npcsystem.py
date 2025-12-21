@@ -107,6 +107,7 @@ class NpcSystem(Concept):
     def draw(self, payload: dict):
         """Action: draw"""
         import pyxel
+        
         for npc in self.active_npcs:
              u = npc.get("sprite_u", 0)
              v = npc.get("sprite_v", 32)

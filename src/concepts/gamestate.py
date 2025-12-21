@@ -20,10 +20,9 @@ class GameState(Concept):
         self.current_state = "EXPLORING"
 
     def change_state(self, payload: dict):
-        """
-        Action: change_state
-        """
+        """Action: change_state"""
         new_state = payload.get("state")
         if new_state and new_state != self.current_state:
             self.current_state = new_state
             self.emit("StateChanged", {"state": new_state})
+

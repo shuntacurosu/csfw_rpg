@@ -4551,8 +4551,8 @@
                     "x": 40,
                     "y": 40,
                     "target_map": 2,
-                    "target_x": 10,
-                    "target_y": 14
+                    "target_x": 8,
+                    "target_y": 8
                 }
             ],
             "encounter_rate": 0.1
