@@ -8,6 +8,10 @@ synchronizations:
         action: load
         payload:
           map_file: "assets/data/maps.json"
+      - target: Player
+        action: load
+      - target: BattleSystem
+        action: load
       - target: GameState
         action: change_state
         payload:
@@ -27,7 +31,7 @@ synchronizations:
   - name: SyncGameStateToInput
     when:
       source: GameState
-      event: Changed
+      event: StateChanged
     then:
       - target: InputSystem
         action: update_state
@@ -207,18 +211,67 @@ synchronizations:
           x: event.x
           y: event.y
 
+  - name: HandleMenuInput
+    when:
+       source: InputSystem
+       event: MenuInput
+    then:
+       - target: MenuSystem
+         action: handle_input
+         payload:
+            key: event.key
+
+  - name: HandleMenuState
+    when:
+      source: MenuSystem
+      event: MenuOpened
+    then:
+      - target: GameState
+        action: change_state
+        payload:
+          state: "MENU"
+          
+  - name: HandleMenuClose
+    when:
+      source: MenuSystem
+      event: MenuClosed
+    then:
+      - target: GameState
+        action: change_state
+        payload:
+          state: "EXPLORING"
+
+  - name: SyncStatsToMenu
+    when:
+      source: Player
+      event: StatChanged
+    then:
+      - target: MenuSystem
+        action: update_player_data
+        payload:
+           hp: event.hp
+           max_hp: event.max_hp
+           atk: event.atk
+           def: event.def_stat
+           spd: event.spd
+           level: event.level
+           xp: event.xp
+           next_xp: event.next_xp
+
   - name: GameLoopDraw
     when:
-      source: GameLoop
-      event: Draw
+        source: GameLoop
+        event: Draw
     then:
-      - target: CameraSystem
-        action: apply
-      - target: MapSystem
-        action: draw 
-      - target: Player
-        action: draw 
-      - target: NpcSystem
-        action: draw 
-      - target: BattleSystem
-        action: draw
+        - target: CameraSystem
+          action: apply
+        - target: MapSystem
+          action: draw
+        - target: Player
+          action: draw
+        - target: NpcSystem
+          action: draw
+        - target: BattleSystem
+          action: draw
+        - target: MenuSystem
+          action: draw

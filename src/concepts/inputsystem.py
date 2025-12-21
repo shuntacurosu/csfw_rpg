@@ -18,16 +18,20 @@ class CancelEvent(BaseModel):
 class BattleCommandEvent(BaseModel):
     command_idx: int
 
+class MenuInputEvent(BaseModel):
+    key: str
+
 class InputSystem(Concept):
     """
     Concept: InputSystem
-    Emits Events: Move, Action, Cancel, BattleCommand
+    Emits Events: Move, Action, Cancel, BattleCommand, MenuInput
     """
     __events__ = {
         "Move": MoveEvent,
         "Action": ActionEvent,
         "Cancel": CancelEvent,
-        "BattleCommand": BattleCommandEvent
+        "BattleCommand": BattleCommandEvent,
+        "MenuInput": MenuInputEvent
     }
 
     def __init__(self, name: str = "InputSystem"):
@@ -39,7 +43,6 @@ class InputSystem(Concept):
         Action: update_state
         """
         self.current_state = payload.get("state", "EXPLORING")
-        print(f"InputSystem state updated to {self.current_state}")
 
     def check_input(self, payload: dict):
         """
@@ -47,7 +50,12 @@ class InputSystem(Concept):
         """
         import pyxel
         
+        # Global Toggle (e.g. M key) - Allow opening menu from Exploring
         if self.current_state == "EXPLORING":
+            if pyxel.btnp(pyxel.KEY_M):
+                self.emit("MenuInput", {"key": "MENU"}) # Open Menu
+                return
+
             if pyxel.btn(pyxel.KEY_UP) or pyxel.btn(pyxel.GAMEPAD1_BUTTON_DPAD_UP):
                 self.emit("Move", {"dx": 0, "dy": -1})
             elif pyxel.btn(pyxel.KEY_DOWN) or pyxel.btn(pyxel.GAMEPAD1_BUTTON_DPAD_DOWN):
@@ -60,7 +68,7 @@ class InputSystem(Concept):
             if pyxel.btnp(pyxel.KEY_Z) or pyxel.btnp(pyxel.GAMEPAD1_BUTTON_A):
                 self.emit("Action", {})
             
-            if pyxel.btnp(pyxel.KEY_X) or pyxel.btnp(pyxel.GAMEPAD1_BUTTON_B):
+            if pyxel.btnp(pyxel.KEY_X) or pyxel.btnp(pyxel.KEY_M):
                 self.emit("Cancel", {})
                 
         elif self.current_state == "BATTLE":
@@ -70,4 +78,14 @@ class InputSystem(Concept):
                  self.emit("BattleCommand", {"command_idx": 2}) # Skill
              elif pyxel.btnp(pyxel.KEY_3):
                  self.emit("BattleCommand", {"command_idx": 3}) # Escape
+
+        elif self.current_state == "MENU":
+            if pyxel.btnp(pyxel.KEY_UP): 
+                self.emit("MenuInput", {"key": "UP"})
+            elif pyxel.btnp(pyxel.KEY_DOWN): 
+                self.emit("MenuInput", {"key": "DOWN"})
+            elif pyxel.btnp(pyxel.KEY_Z) or pyxel.btnp(pyxel.KEY_RETURN): 
+                self.emit("MenuInput", {"key": "CONFIRM"})
+            elif pyxel.btnp(pyxel.KEY_X) or pyxel.btnp(pyxel.KEY_M): 
+                self.emit("MenuInput", {"key": "CANCEL"})
 

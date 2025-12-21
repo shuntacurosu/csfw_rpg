@@ -13,6 +13,7 @@ from concepts.npcsystem import NpcSystem
 from concepts.battlesystem import BattleSystem
 from concepts.gamestate import GameState
 from concepts.camerasystem import CameraSystem
+from concepts.menusystem import MenuSystem
 
 try:
     from cs_framework.engine.runner import Runner
@@ -132,6 +133,7 @@ def get_runner():
     btl = BattleSystem("BattleSystem")
     gs = GameState("GameState")
     cam = CameraSystem("CameraSystem")
+    menu = MenuSystem("MenuSystem")
     
     # Register Concepts
     runner.register(gl)
@@ -142,6 +144,7 @@ def get_runner():
     runner.register(btl)
     runner.register(gs)
     runner.register(cam)
+    runner.register(menu)
     
     # Concept Map for Rule Loading
     concepts_map = {
@@ -152,7 +155,8 @@ def get_runner():
         "NpcSystem": npc,
         "BattleSystem": btl,
         "GameState": gs,
-        "CameraSystem": cam
+        "CameraSystem": cam,
+        "MenuSystem": menu
     }
     
     # Inject runner into GameLoop so it can drive the loop

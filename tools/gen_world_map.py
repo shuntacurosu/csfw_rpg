@@ -58,17 +58,51 @@ def generate_map():
     with open(maps_file, 'r') as f:
         data = json.load(f)
     
+    # Load existing maps (specifically to allow cloning Map 0)
+    maps_file = 'assets/data/maps.json'
+    with open(maps_file, 'r') as f:
+        data = json.load(f)
+    
     existing_maps = {m['id']: m for m in data['maps']}
     
-    # Create Map 2 (Village B) as a clone of Map 0
-    map_village_b = existing_maps.get(0).copy()
-    if map_village_b:
-        map_village_b["id"] = 2
-        map_village_b["name"] = "Village B"
-        # Edit portal to point back to Map 1 at correct location
-        map_village_b["portals"] = [
-             {"x": 10, "y": 15, "target_map": 1, "target_x": 40, "target_y": 41}
-        ]
+    # Create Map 2 (Village B) - 32x32
+    import copy
+    
+    # Generate 32x32 tiles for Village B (Simple walled village)
+    vb_w, vb_h = 32, 32
+    vb_tiles = [[0 for _ in range(vb_w)] for _ in range(vb_h)]
+    for y in range(vb_h):
+        for x in range(vb_w):
+            if x == 0 or x == vb_w-1 or y == 0 or y == vb_h-1:
+                vb_tiles[y][x] = 1 # Wall
+            elif x % 4 == 0 and y % 4 == 0:
+                 vb_tiles[y][x] = 3 # Path/Decor
+            else:
+                 vb_tiles[y][x] = 0 # Grass
+    
+    # Create a wider opening in the bottom wall (3x3 area)
+    for y in [29, 30, 31]:
+        for x in [15, 16, 17]:
+            vb_tiles[y][x] = 3 # Path/Walkable
+
+    map_village_b = {
+        "id": 2,
+        "name": "Village B",
+        "width": vb_w,
+        "height": vb_h,
+        "tiles": vb_tiles,
+        "objects": [],
+        "portals": [
+            {
+                "x": 16,
+                "y": 30, # Portal at y=30 for consistency
+                "target_map": 1,
+                "target_x": 40,
+                "target_y": 41
+            }
+        ],
+        "encounter_rate": 0.0
+    }
     
     # Update Map 1 (World Map)
     new_map = {

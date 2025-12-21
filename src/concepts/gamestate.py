@@ -3,16 +3,16 @@ from pydantic import BaseModel
 from typing import Any, Dict
 
 
-class ChangedEvent(BaseModel):
+class StateChangedEvent(BaseModel):
     state: str
 
 class GameState(Concept):
     """
     Concept: GameState
-    Emits Events: Changed
+    Emits Events: StateChanged
     """
     __events__ = {
-        "Changed": ChangedEvent
+        "StateChanged": StateChangedEvent
     }
 
     def __init__(self, name: str = "GameState"):
@@ -25,7 +25,7 @@ class GameState(Concept):
         """
         new_state = payload.get("state")
         if new_state and new_state != self.current_state:
-            print(f"GameState changing from {self.current_state} to {new_state}")
+            print(f"GameState: {self.current_state} -> {new_state}")
             self.current_state = new_state
-            self.emit("Changed", {"state": new_state})
+            self.emit("StateChanged", {"state": new_state})
 

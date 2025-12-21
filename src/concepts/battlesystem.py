@@ -28,38 +28,72 @@ class BattleSystem(Concept):
         super().__init__(name)
         self.active_battle = False
         self.enemies = []
+        self.enemy_templates = {}
+        self.log_message = ""
         self.turn_order = []
         self.current_turn_index = 0
+        
+        # Player Stats Cache
+        self.player_stats = {
+            "hp": 20, "max_hp": 20, "atk": 5, "def": 2, "spd": 3
+        }
 
+    def load(self, payload: dict):
+        """
+        Action: load
+        """
+        import os
+        import json
+        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+        enemy_file = os.path.join(base_dir, "assets/data/enemies.json")
+        if os.path.exists(enemy_file):
+            with open(enemy_file, 'r') as f:
+                data = json.load(f)
+                self.enemy_templates = {e["name"]: e for e in data.get("enemies", [])}
+                print(f"Loaded {len(self.enemy_templates)} enemy types")
 
+    def update_player_stats(self, payload: dict):
+        """
+        Action: update_player_stats
+        """
+        self.player_stats.update(payload)
+        print(f"BattleSystem updated player stats: {self.player_stats}")
 
     def start_battle(self, payload: dict):
         """
         Action: start_battle
         """
         enemy_names = payload.get("enemies", [])
-        print(f"Battle started with {enemy_names}")
         self.active_battle = True
-        # Initialize enemies with stats
-        self.enemies = []
-        for name in enemy_names:
-            self.enemies.append({
-                "name": name,
-                "hp": 20,
-                "max_hp": 20
-            })
-        
-        self.turn_order = ["Player"] + self.enemies
-        self.current_turn_index = 0
         self.log_message = "Battle Start!"
+        self.enemies = []
+        
+        for name in enemy_names:
+            template = self.enemy_templates.get(name)
+            if template:
+                # Clone and init HP
+                enemy = template.copy()
+                enemy["hp"] = enemy["max_hp"]
+                self.enemies.append(enemy)
+            else:
+                # Fallback
+                self.enemies.append({
+                    "name": name, "hp": 10, "max_hp": 10, 
+                    "atk": 5, "def": 0, "spd": 2, "xp_reward": 5,
+                    "sprite_u": 0, "sprite_v": 32 
+                })
+        
+        # Determine Turn Order (Speed based)
+        # For simplicity, Player always goes first for now unless we do initiative roll
+        self.turn_order = ["Player"] + [f"Enemy:{i}" for i in range(len(self.enemies))]
+        self.current_turn_index = 0
+        self.log_message = f"Enemies: {', '.join([e['name'] for e in self.enemies])}"
 
     def end_battle(self, payload: dict):
         """
         Action: end_battle
         """
-        print("Battle ended")
         self.active_battle = False
-        self.enemies = []
         self.log_message = ""
         
     def handle_input(self, payload: dict):
@@ -69,14 +103,13 @@ class BattleSystem(Concept):
         """
         if not self.active_battle: return
         
-        idx = payload.get("command_idx")
-        
-        if idx == 1:
-            self.emit("TurnAction", {"entity": "Player", "action": "Attack"})
-        elif idx == 2:
-            self.emit("TurnAction", {"entity": "Player", "action": "Skill"}) 
-        elif idx == 3:
-            self.emit("BattleEnded", {"result": "ESCAPE"})
+        cmd = payload.get("command") # Attack, Skill, Escape
+        if cmd == "Escape":
+            self.active_battle = False
+            self.emit("BattleEnded", {"result": "ESCAPE", "xp": 0})
+        elif cmd in ["Attack", "Skill"]:
+             # Player Action
+             self.emit("TurnAction", {"entity": "Player", "action": cmd})
 
     def process_turn(self, payload: dict):
         """
@@ -86,26 +119,41 @@ class BattleSystem(Concept):
         action = payload.get("action")
         
         if entity == "Player":
+            # Player ATK vs Enemy DEF
+            target = self.enemies[0] # Target first for now
+            
+            damage = 0
             if action == "Attack":
-                if not self.enemies: return
-                target = self.enemies[0]
-                damage = 5
-                target["hp"] -= damage
-                self.log_message = f"Player attacks {target['name']} for {damage} dmg!"
+                atk = self.player_stats.get("atk", 10)
+                defence = target.get("def", 0)
+                damage = max(1, atk - defence // 2)
+                target["hp"] -= int(damage)
+                self.log_message = f"Hit {target['name']} for {int(damage)} dmg!"
                 
             elif action == "Skill":
-                damage = 10
-                self.log_message = f"Player uses Fireball! All take {damage} dmg!"
-                for enemy in self.enemies:
-                    enemy["hp"] -= damage
+                # Fireball AOE
+                atk = self.player_stats.get("atk", 10) # Magic attack? use atk for now
+                damage = max(1, atk * 1.5) # Ignore def
+                for e in self.enemies:
+                    e["hp"] -= int(damage)
+                self.log_message = f"Fireball! {int(damage)} dmg to all!"
         
         # Check deaths
-        self.enemies = [e for e in self.enemies if e["hp"] > 0]
+        active_enemies = [e for e in self.enemies if e["hp"] > 0]
         
-        if not self.enemies:
+        if not active_enemies:
+            # Win!
+            total_xp = sum([e.get("xp_reward", 0) for e in self.enemies]) 
+            
+            self.enemies = []
             self.log_message = "VICTORY!"
-            # Small delay or immediate end?
-            self.emit("BattleEnded", {"result": "WIN"})
+            self.emit("BattleEnded", {"result": "WIN", "xp": total_xp})
+        else:
+            self.enemies = active_enemies
+            # Enemy Turn (Simple)
+            # ... Enemy attacks player ...
+            # For now just log
+            pass
             
     def draw(self, payload: dict):
         """
