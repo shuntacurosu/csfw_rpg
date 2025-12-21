@@ -1,0 +1,76 @@
+synchronizations:
+  - name: InitMap
+    when:
+      source: GameLoop
+      event: Initialized
+    then:
+      - target: MapSystem
+        action: load
+        payload:
+          map_file: "assets/data/maps.json"
+      - target: GameState
+        action: change_state
+        payload:
+          state: "EXPLORING"
+
+  - name: GameLoopUpdate
+    when:
+      source: GameLoop
+      event: Update
+    then:
+      - target: InputSystem
+        action: check_input
+
+  - name: HandleMovement
+    when:
+      source: InputSystem
+      event: Move
+    then:
+      - target: Player
+        action: move
+        payload:
+          dx: event.dx
+          dy: event.dy
+
+  - name: HandleAction
+    when:
+      source: InputSystem
+      event: Action
+    then:
+      - target: Player
+        action: interact
+
+  - name: PlayerMoved
+    when:
+      source: Player
+      event: Moved
+    then:
+      - target: MapSystem
+        action: check_collision # Verify if this is how collision check is intended? 
+        # Actually collision check should happen BEFORE move completion?
+        # CSFW actions are usually reactive. 
+        # Maybe Player.move calls MapSystem?
+        # Or better: Input -> Player.move(dx, dy) -> checks collision inside logic or emits "AttemptMove"
+        # For simplicity, let's assume Player logic checks collision using MapSystem (via query or method call? But Concepts separate...)
+        # In CSFW, concepts shouldn't directly call each other.
+        # So Player needs Map data or MapSystem needs to validate.
+        # Option A: Player action `move` emits `RequestMove`. MapSystem listens `RequestMove` -> checks -> emits `MoveAllowed`. Player listens `MoveAllowed` -> updates pos -> emits `Moved`.
+        # Option B: Player has access to map data (via shared resource or payload).
+        # Let's stick to simple: Player `move` logic will optimistically update or we implement the proper request/response loop later. 
+        # For now, let's assume Player handles its position. Collision will be added later.
+        action: check_collision # Just to trigger potential triggers (encounters etc) or Map checks.
+        payload:
+          x: event.x
+          y: event.y
+
+  - name: GameLoopDraw
+    when:
+      source: GameLoop
+      event: Draw
+    then:
+      - target: MapSystem
+        action: draw # Assuming MapSystem has draw (Need to add it!)
+      - target: Player
+        action: draw # Need to add draw action to Player
+      - target: NpcSystem
+        action: draw # Need to add draw action
