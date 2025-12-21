@@ -198,18 +198,18 @@ class MapSystem(Concept):
         enemies = []
         
         if tile_id in [4]: # Forest
-            chance = 0.15
+            chance = 0.005 # ~5% per move
             enemies = ["Wolf", "Spider"]
         elif tile_id in [5]: # Desert
-            chance = 0.10
+            chance = 0.005
             enemies = ["Scorpion", "Snake"]
         elif tile_id in [0, 3]: # Plains/Path
-            chance = 0.05
+            chance = 0.001 
             enemies = ["Slime", "Bat"]
         elif tile_id == 7: # Village Icon
             chance = 0.0
         else:
-            chance = 0.05
+            chance = 0.001
             enemies = ["Slime"]
             
         if random.random() < chance:

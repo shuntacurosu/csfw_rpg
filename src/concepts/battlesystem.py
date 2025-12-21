@@ -165,7 +165,7 @@ class BattleSystem(Concept):
         """
         import pyxel
         if self.active_battle:
-            # Reset camera for UI
+            # Reset camera MUST happen first
             pyxel.camera(0, 0)
             
             # Draw battle overlay
