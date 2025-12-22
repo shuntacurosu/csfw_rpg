@@ -1,6 +1,6 @@
 from cs_framework.core.concept import Concept
 from pydantic import BaseModel
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 
 class MovedEvent(BaseModel):
@@ -41,6 +41,9 @@ class StatChangedEvent(BaseModel):
     level: int
     xp: int
     next_xp: int
+    gold: int = 0
+    inventory: List[Dict[str, Any]] = []
+    equipment: Dict[str, Any] = {}
 
 class EquipItemEvent(BaseModel):
     slot: str
@@ -84,7 +87,7 @@ class Player(Concept):
         self.level = 1
         self.xp = 0
         self.next_level_xp = 100
-        self.gold = 0
+        self.gold = 10000  # Starting gold
         
         # Base Stats
         self.base_max_hp = 30
@@ -172,14 +175,27 @@ class Player(Concept):
         slot = payload.get("slot")
         item = payload.get("item")
         if slot in self.equipment:
+            old_item = self.equipment.get(slot)
             self.equipment[slot] = item
-            print(f"Equipped {item['name']} to {slot}")
+            if item:
+                print(f"Equipped {item['name']} to {slot}")
+            else:
+                if old_item:
+                    print(f"Unequipped {old_item['name']} from {slot}")
+                else:
+                    print(f"Nothing to unequip from {slot}")
             self.recalc_stats()
 
     def add_to_inventory(self, payload: dict):
         """Action: add_to_inventory"""
         item = payload.get("item")
         if item:
+            # Deduct gold if item has a price
+            price = item.get("price", 0)
+            if price > 0:
+                self.gold -= price
+                print(f"Spent {price}G. Remaining gold: {self.gold}")
+            
             self.inventory.append(item)
             print(f"Player inventory: {[i['name'] for i in self.inventory]}")
             self.recalc_stats()
@@ -209,7 +225,10 @@ class Player(Concept):
             "spd": self.spd,
             "level": self.level,
             "xp": self.xp,
-            "next_xp": self.next_level_xp
+            "next_xp": self.next_level_xp,
+            "gold": self.gold,
+            "inventory": self.inventory,
+            "equipment": self.equipment
         })
 
     def initiate_move(self, payload: dict):

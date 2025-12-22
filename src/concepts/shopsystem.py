@@ -22,6 +22,7 @@ class ShopSystem(Concept):
         super().__init__(name)
         self.active = False
         self.confirming = False  # Confirmation dialog state
+        self.player_gold = 0  # Synced from player
         self.shop_inventory = [
             {"name": "Potion", "type": "ITEM", "hp_bonus": 20, "price": 50, "desc": "Restores 20 HP"},
             {"name": "Iron Sword", "type": "weapon", "atk_bonus": 8, "price": 150, "desc": "+8 Attack"},
@@ -35,6 +36,10 @@ class ShopSystem(Concept):
             {"name": "Iron Boots", "type": "legs", "def_bonus": 3, "price": 90, "desc": "+3 Defense"}
         ]
         self.cursor = 0
+
+    def update_player_gold(self, payload: dict):
+        """Action: update_player_gold - Syncs gold from Player"""
+        self.player_gold = payload.get("gold", 0)
 
     def open_shop(self, payload: dict):
         """Action: open_shop"""
@@ -86,7 +91,9 @@ class ShopSystem(Concept):
         pyxel.rect(x, y, w, h, 0)  # Black BG
         pyxel.rectb(x, y, w, h, 7)  # White Border
         pyxel.rect(x, y, w, 15, 1)  # Header
-        pyxel.text(x + 70, y + 5, "--- VILLAGE B SHOP ---", 7)
+        pyxel.text(x + 50, y + 5, "--- VILLAGE B SHOP ---", 7)
+        # Show player's gold in top right
+        pyxel.text(x + w - 60, y + 5, f"Gold: {self.player_gold}", 11)
         
         # List items
         list_x = x + 10

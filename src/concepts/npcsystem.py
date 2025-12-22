@@ -111,6 +111,8 @@ class NpcSystem(Concept):
         for npc in self.active_npcs:
              u = npc.get("sprite_u", 0)
              v = npc.get("sprite_v", 32)
+             # Use color 0 (black) as transparent
+             # Sprites must have black (color 0) backgrounds to be transparent
              pyxel.blt(npc["x"], npc["y"], 0, u, v, 16, 16, 0)
         
         if self.active_dialog:

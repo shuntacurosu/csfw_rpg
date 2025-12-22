@@ -29,7 +29,7 @@
             "map_id": 2,
             "x": 144,
             "y": 112,
-            "sprite_u": 16,
+            "sprite_u": 0,
             "sprite_v": 32,
             "dialog": [
                 "Welcome to the Equipment Shop!",
@@ -53,7 +53,7 @@
             "map_id": 2,
             "x": 48,
             "y": 128,
-            "sprite_u": 32,
+            "sprite_u": 0,
             "sprite_v": 32,
             "dialog": [
                 "Have you talked to the shopkeeper yet?",
@@ -65,7 +65,7 @@
             "map_id": 2,
             "x": 112,
             "y": 144,
-            "sprite_u": 16,
+            "sprite_u": 0,
             "sprite_v": 32,
             "dialog": [
                 "I am the General Merchant.",

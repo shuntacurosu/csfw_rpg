@@ -264,6 +264,19 @@ synchronizations:
            level: event.level
            xp: event.xp
            next_xp: event.next_xp
+           gold: event.gold
+           inventory: event.inventory
+           equipment: event.equipment
+
+  - name: SyncGoldToShop
+    when:
+      source: Player
+      event: StatChanged
+    then:
+      - target: ShopSystem
+        action: update_player_gold
+        payload:
+           gold: event.gold
 
   - name: GameLoopDraw
     when:

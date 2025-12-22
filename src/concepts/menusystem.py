@@ -8,6 +8,10 @@ class MenuOpenedEvent(BaseModel):
 class MenuClosedEvent(BaseModel):
     pass
 
+class EquipItemEvent(BaseModel):
+    slot: str
+    item: Any = None  # Can be None for unequip
+
 class MenuSystem(Concept):
     """
     Concept: MenuSystem
@@ -15,9 +19,9 @@ class MenuSystem(Concept):
     """
     __events__ = {
         "MenuOpened": MenuOpenedEvent,
-        "MenuClosed": MenuOpenedEvent, # Reusing simple pass
+        "MenuClosed": MenuClosedEvent,
         "ItemUsed": BaseModel,
-        "EquipItem": BaseModel
+        "EquipItem": EquipItemEvent
     }
 
     def __init__(self, name: str = "MenuSystem"):
@@ -26,15 +30,27 @@ class MenuSystem(Concept):
         self.state = "MAIN" # MAIN, ITEMS, EQUIP, STATUS, OPTIONS
         self.cursor = 0
         self.menu_items = ["Status", "Items", "Equipment", "Options", "Close"]
+        self.equip_slots = ["weapon", "shield", "head", "body", "arms", "legs"]
+        self.sub_state = "SELECT_SLOT"
+        self.sub_cursor = 0
         
         # Local cache of player data for display
         self.player_stats = {
             "level": 1, "xp": 0, "next_xp": 100,
             "hp": 30, "max_hp": 30,
-            "atk": 10, "def": 5, "spd": 5
+            "atk": 10, "def": 5, "spd": 5,
+            "gold": 0
         }
         self.inventory = []
         self.equipment = {}
+
+    def _get_eligible_items(self):
+        """Get items that can be equipped in the currently selected slot."""
+        if self.cursor >= len(self.equip_slots):
+            return []
+        slot = self.equip_slots[self.cursor]
+        # Find items in inventory that match this slot type
+        return [i for i in self.inventory if i.get("type", "").lower() == slot.lower()]
 
     def open(self, payload: dict):
         """Action: open"""
@@ -70,12 +86,39 @@ class MenuSystem(Concept):
                 self.open({})
             return
 
+        # Handle EQUIPMENT sub-state navigation separately
+        if self.state == "EQUIPMENT" and self.sub_state == "SELECT_ITEM":
+            items = self._get_eligible_items()
+            if key == "UP":
+                self.sub_cursor = max(0, self.sub_cursor - 1)
+            elif key == "DOWN":
+                self.sub_cursor = min(len(items) - 1, self.sub_cursor + 1) if items else 0
+            elif key == "CONFIRM":
+                self._handle_confirm()
+            elif key == "CANCEL":
+                self.sub_state = "SELECT_SLOT"
+            return
+
+        # Handle UNEQUIP in EQUIPMENT SELECT_SLOT state
+        if self.state == "EQUIPMENT" and self.sub_state == "SELECT_SLOT":
+            if key == "UNEQUIP":
+                slot = self.equip_slots[self.cursor]
+                if self.equipment.get(slot):
+                    print(f"Unequipping {self.equipment[slot]['name']} from {slot}")
+                    self.emit("EquipItem", {"slot": slot, "item": None})
+                return
+
         if key == "UP":
             self.cursor = max(0, self.cursor - 1)
         elif key == "DOWN":
             max_c = len(self.menu_items) - 1
-            if self.state == "ITEMS": max_c = max(0, len(self.inventory) - 1)
-            # ... other states ...
+            if self.state == "ITEMS":
+                consumables = [i for i in self.inventory if i.get("type", "").upper() == "ITEM"]
+                max_c = max(0, len(consumables) - 1)
+            elif self.state == "EQUIPMENT":
+                max_c = len(self.equip_slots) - 1
+            elif self.state == "STATUS":
+                max_c = 0
             self.cursor = min(max_c, self.cursor + 1)
             
         elif key == "CONFIRM":
@@ -156,18 +199,21 @@ class MenuSystem(Concept):
             pyxel.text(x + 10, y + 30, f"Name: Hero", 7)
             pyxel.text(x + 10, y + 42, f"Level: {s.get('level')}", 10)
             pyxel.text(x + 10, y + 54, f"XP: {s.get('xp')} / {s.get('next_xp', 100)}", 13)
+            pyxel.text(x + 10, y + 66, f"Gold: {s.get('gold', 0)}G", 11)
             
-            pyxel.text(x + 10, y + 74, f"HP: {s.get('hp')} / {s.get('max_hp')}", 7)
-            pyxel.text(x + 10, y + 86, f"ATK: {s.get('atk')}", 7)
-            pyxel.text(x + 10, y + 98, f"DEF: {s.get('def_stat', s.get('def'))}", 7)
-            pyxel.text(x + 10, y + 110, f"SPD: {s.get('spd')}", 7)
+            pyxel.text(x + 10, y + 86, f"HP: {s.get('hp')} / {s.get('max_hp')}", 7)
+            pyxel.text(x + 10, y + 98, f"ATK: {s.get('atk')}", 7)
+            pyxel.text(x + 10, y + 110, f"DEF: {s.get('def_stat', s.get('def'))}", 7)
+            pyxel.text(x + 10, y + 122, f"SPD: {s.get('spd')}", 7)
             
         elif self.state == "ITEMS":
             pyxel.text(x + 10, y + 10, "-- ITEMS --", 7)
-            if not self.inventory:
+            # Only show consumable items (type == ITEM)
+            consumables = [i for i in self.inventory if i.get("type", "").upper() == "ITEM"]
+            if not consumables:
                 pyxel.text(x + 20, y + 30, "(Empty)", 6)
             else:
-                for i, item in enumerate(self.inventory):
+                for i, item in enumerate(consumables):
                     col = 10 if i == self.cursor else 7
                     pyxel.text(x + 20, y + 30 + i*10, item["name"], col)
                     
@@ -180,11 +226,17 @@ class MenuSystem(Concept):
                 pyxel.text(x + 10, y + 30 + i*15, f"{slot.capitalize()}:", 6)
                 pyxel.text(x + 60, y + 30 + i*15, val, col)
 
+            # Navigation hints
+            if self.sub_state == "SELECT_SLOT":
+                pyxel.text(x + 10, y + h - 15, "[Z]: Select  [C]: Unequip  [X]: Back", 6)
+            else:
+                pyxel.text(x + 10, y + h - 15, "[Z]: Equip  [X]: Cancel", 6)
+
             if self.sub_state == "SELECT_ITEM":
-                # Draw small selector on right
-                ix, iy = x + 100, y + 30
-                pyxel.rect(ix - 5, iy - 5, 75, 100, 1)
-                pyxel.rectb(ix - 5, iy - 5, 75, 100, 7)
+                # Draw item selector on right
+                ix, iy = x + 100, y + 25
+                pyxel.rect(ix - 5, iy - 5, 75, 80, 1)
+                pyxel.rectb(ix - 5, iy - 5, 75, 80, 7)
                 items = self._get_eligible_items()
                 if not items:
                     pyxel.text(ix, iy, "None", 6)
@@ -192,6 +244,33 @@ class MenuSystem(Concept):
                     for i, item in enumerate(items):
                         col = 10 if i == self.sub_cursor else 7
                         pyxel.text(ix, iy + i*12, item["name"], col)
+                
+                # Show stat comparison
+                if items and self.sub_cursor < len(items):
+                    selected_item = items[self.sub_cursor]
+                    s = self.player_stats
+                    
+                    # Calculate stat changes
+                    atk_change = selected_item.get("atk_bonus", 0)
+                    def_change = selected_item.get("def_bonus", 0)
+                    
+                    # Show comparison below equipment list
+                    cmp_y = y + 125
+                    pyxel.text(x + 10, cmp_y, "-- STAT PREVIEW --", 6)
+                    
+                    # ATK
+                    curr_atk = s.get("atk", 0)
+                    new_atk = curr_atk + atk_change
+                    atk_col = 10 if atk_change > 0 else (8 if atk_change < 0 else 7)
+                    atk_arrow = "+" if atk_change > 0 else ""
+                    pyxel.text(x + 10, cmp_y + 12, f"ATK: {curr_atk} -> {new_atk} ({atk_arrow}{atk_change})", atk_col)
+                    
+                    # DEF
+                    curr_def = s.get("def_stat", s.get("def", 0))
+                    new_def = curr_def + def_change
+                    def_col = 10 if def_change > 0 else (8 if def_change < 0 else 7)
+                    def_arrow = "+" if def_change > 0 else ""
+                    pyxel.text(x + 10, cmp_y + 24, f"DEF: {curr_def} -> {new_def} ({def_arrow}{def_change})", def_col)
 
         elif self.state == "OPTIONS":
             pyxel.text(x + 10, y + 10, "-- OPTIONS --", 7)

@@ -92,6 +92,8 @@ class InputSystem(Concept):
                 self.emit("MenuInput", {"key": "CONFIRM"})
             elif pyxel.btnp(pyxel.KEY_X) or pyxel.btnp(pyxel.KEY_M): 
                 self.emit("MenuInput", {"key": "CANCEL"})
+            elif pyxel.btnp(pyxel.KEY_C):
+                self.emit("MenuInput", {"key": "UNEQUIP"})
 
         elif self.current_state == "DIALOG":
             if pyxel.btnp(pyxel.KEY_Z) or pyxel.btnp(pyxel.KEY_X) or pyxel.btnp(pyxel.KEY_SPACE):
