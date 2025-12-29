@@ -27,6 +27,20 @@
             ]
         },
         {
+            "id": 7,
+            "map_id": 0,
+            "x": 100,
+            "y": 130,
+            "sprite_u": 16,
+            "sprite_v": 32,
+            "is_shop": true,
+            "mobile": false,
+            "dialog": [
+                "Hello! Welcome to the Village Shop.",
+                "We have great items!"
+            ]
+        },
+        {
             "id": 3,
             "map_id": 2,
             "x": 144,

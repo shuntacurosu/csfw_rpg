@@ -45,7 +45,7 @@ class ShopSystem(Concept):
     def open_shop(self, payload: dict):
         """Action: open_shop"""
         npc_id = payload.get("npc_id")
-        if npc_id not in [3, 6]:
+        if npc_id not in [3, 6, 7]:
             return
             
         self.active = True
@@ -118,7 +118,14 @@ class ShopSystem(Concept):
         pyxel.text(detail_x, detail_y + 15, curr_item["name"], 10)
         pyxel.text(detail_x, detail_y + 27, f"Type: {curr_item['type']}", 7)
         pyxel.text(detail_x, detail_y + 39, f"Price: {curr_item['price']}G", 11)
-        pyxel.text(detail_x, detail_y + 55, curr_item.get("desc", ""), 13)
+        
+        y_offset = 51
+        if curr_item['type'] == 'weapon':
+            t_type = curr_item.get('target_type', 'SINGLE')
+            pyxel.text(detail_x, detail_y + y_offset, f"Target: {t_type}", 9)
+            y_offset += 12
+            
+        pyxel.text(detail_x, detail_y + y_offset + 5, curr_item.get("desc", ""), 13)
         
         # Navigation Instructions (always visible)
         pyxel.text(x + 10, y + h - 15, "[Z]: Buy  [X]: Exit  [UP/DOWN]: Select", 6)

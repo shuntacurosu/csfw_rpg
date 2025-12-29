@@ -251,8 +251,18 @@ class MenuSystem(Concept):
                     s = self.player_stats
                     
                     # Calculate stat changes
-                    atk_change = selected_item.get("atk_bonus", 0)
-                    def_change = selected_item.get("def_bonus", 0)
+                    # Calculate stat changes based on difference
+                    item_bonus_atk = selected_item.get("atk_bonus", 0)
+                    item_bonus_def = selected_item.get("def_bonus", 0)
+                    
+                    # Current equipped item bonus
+                    slot = self.equip_slots[self.cursor]
+                    current_item = self.equipment.get(slot)
+                    current_bonus_atk = current_item.get("atk_bonus", 0) if current_item else 0
+                    current_bonus_def = current_item.get("def_bonus", 0) if current_item else 0
+                    
+                    atk_change = item_bonus_atk - current_bonus_atk
+                    def_change = item_bonus_def - current_bonus_def
                     
                     # Show comparison below equipment list
                     cmp_y = y + 125

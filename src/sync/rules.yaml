@@ -271,6 +271,21 @@ synchronizations:
            inventory: event.inventory
            equipment: event.equipment
 
+  - name: SyncStatsToBattle
+    when:
+      source: Player
+      event: StatChanged
+    then:
+      - target: BattleSystem
+        action: update_player_stats
+        payload:
+           atk: event.atk
+           def: event.def_stat
+           spd: event.spd
+           hp: event.hp
+           max_hp: event.max_hp
+           equipment: event.equipment
+
   - name: SyncGoldToShop
     when:
       source: Player
@@ -312,7 +327,7 @@ synchronizations:
           state: "DIALOG"
 
   - name: HandleShopStart
-    condition: "event.npc_id in [3, 6]"
+    condition: "event.npc_id in [3, 6, 7]"
     when:
       source: NpcSystem
       event: DialogEnded
@@ -338,7 +353,7 @@ synchronizations:
         action: advance_dialog
 
   - name: HandleDialogClose
-    condition: "event.npc_id not in [3, 6]"
+    condition: "event.npc_id not in [3, 6, 7]"
     when:
       source: NpcSystem
       event: DialogEnded
