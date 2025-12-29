@@ -73,15 +73,18 @@ class InputSystem(Concept):
                 self.emit("Cancel", {})
                 
         elif self.current_state == "BATTLE":
-             if pyxel.btnp(pyxel.KEY_1):
-                 print("[InputSystem] BattleCommand: Attack")
-                 self.emit("BattleCommand", {"command": "Attack"}) 
-             elif pyxel.btnp(pyxel.KEY_2):
-                 print("[InputSystem] BattleCommand: Skill")
-                 self.emit("BattleCommand", {"command": "Skill"}) 
-             elif pyxel.btnp(pyxel.KEY_3):
-                 print("[InputSystem] BattleCommand: Escape")
-                 self.emit("BattleCommand", {"command": "Escape"}) 
+             if pyxel.btnp(pyxel.KEY_UP):
+                 self.emit("BattleCommand", {"command": "Up"})
+             elif pyxel.btnp(pyxel.KEY_DOWN):
+                 self.emit("BattleCommand", {"command": "Down"})
+             elif pyxel.btnp(pyxel.KEY_LEFT):
+                 self.emit("BattleCommand", {"command": "Left"})
+             elif pyxel.btnp(pyxel.KEY_RIGHT):
+                 self.emit("BattleCommand", {"command": "Right"})
+             elif pyxel.btnp(pyxel.KEY_Z) or pyxel.btnp(pyxel.KEY_RETURN):
+                 self.emit("BattleCommand", {"command": "Confirm"})
+             elif pyxel.btnp(pyxel.KEY_X):
+                 self.emit("BattleCommand", {"command": "Cancel"}) 
 
         elif self.current_state == "MENU" or self.current_state == "SHOP":
             if pyxel.btnp(pyxel.KEY_UP): 

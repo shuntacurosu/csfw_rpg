@@ -197,6 +197,7 @@ synchronizations:
         payload:
           entity: event.entity
           action: event.action
+          target: event.target
 
   - name: HandleCameraMapLoad
     when:

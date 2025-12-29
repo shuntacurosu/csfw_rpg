@@ -25,8 +25,9 @@ class ShopSystem(Concept):
         self.player_gold = 0  # Synced from player
         self.shop_inventory = [
             {"name": "Potion", "type": "ITEM", "hp_bonus": 20, "price": 50, "desc": "Restores 20 HP"},
-            {"name": "Iron Sword", "type": "weapon", "atk_bonus": 8, "price": 150, "desc": "+8 Attack"},
-            {"name": "Steel Blade", "type": "weapon", "atk_bonus": 15, "price": 300, "desc": "+15 Attack"},
+            {"name": "Iron Sword", "type": "weapon", "atk_bonus": 8, "price": 150, "desc": "+8 Attack", "target_type": "SINGLE"},
+            {"name": "Steel Blade", "type": "weapon", "atk_bonus": 15, "price": 300, "desc": "+15 Attack", "target_type": "SINGLE"},
+            {"name": "Fire Rod", "type": "weapon", "atk_bonus": 20, "price": 500, "desc": "Fire Damage (All)", "target_type": "ALL"},
             {"name": "Buckler", "type": "shield", "def_bonus": 3, "price": 80, "desc": "+3 Defense"},
             {"name": "Kite Shield", "type": "shield", "def_bonus": 7, "price": 200, "desc": "+7 Defense"},
             {"name": "Iron Helm", "type": "head", "def_bonus": 2, "price": 60, "desc": "+2 Defense"},
