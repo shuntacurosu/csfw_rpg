@@ -179,57 +179,75 @@ class MapSystem(Concept):
         Action: check_encounter
         """
         import random
-        # print(f"MapSystem: check_encounter called with {payload}")
         x = payload.get("x")
         y = payload.get("y")
         
         current_map = self.map_data.get(self.current_map_id)
         if not current_map: return
         
-        # Base rate
-        base_rate = current_map.get("encounter_rate", 0.0)
-        # print(f"[MapSystem] check_encounter for Map {self.current_map_id}. Base Rate: {base_rate}")
-        if base_rate <= 0: return
+        # Get Rules from Map Data
+        rules = current_map.get("encounter_rules", [])
+        
+        # Fallback to old simple rate if no rules defined (compatibility)
+        if not rules:
+            base_rate = current_map.get("encounter_rate", 0.0)
+            if base_rate > 0 and random.random() < base_rate:
+                 self.emit("BattleStarted", {"enemies": ["Slime"]})
+            return
 
-        # Tile Type Modifiers
+        # Player Tile Logic
         tx = int((x + 8) // 16)
         ty = int((y + 8) // 16)
-        tiles = current_map["tiles"]
-        
         map_w = current_map.get("width", 16)
         map_h = current_map.get("height", 16)
         
-        if ty < 0 or ty >= map_h or tx < 0 or tx >= map_w: return
-        
-        tile_id = tiles[ty][tx]
-        
-        # 4=Forest, 5=Desert -> High Rate
-        # 0=Grass, 3=Path -> Low Rate
-        # 7=Village -> Safe
-        
-        chance = 0.0
-        enemies = []
-        
-        if tile_id in [4]: # Forest
-            chance = 0.005 # ~5% per move
-            enemies = ["Wolf", "Spider"]
-        elif tile_id in [5]: # Desert
-            chance = 0.005
-            enemies = ["Scorpion", "Snake"]
-        elif tile_id in [0, 3]: # Plains/Path
-            chance = 0.001 
-            enemies = ["Slime", "Bat"]
-        elif tile_id == 7: # Village Icon
-            chance = 0.0
-        else:
-            chance = 0.001
-            enemies = ["Slime"]
+        tile_id = 0
+        if 0 <= tx < map_w and 0 <= ty < map_h:
+            tile_id = current_map["tiles"][ty][tx]
             
-        if random.random() < chance:
-            self.emit("BattleStarted", {"enemies": enemies})
-        else:
-            # print(f"Encounter Check: Map {self.current_map_id} Pos ({tx},{ty}) Tile {tile_id} - Chance {chance} - Failed")
-            pass
+        # Evaluate Rules
+        # We check specific rules first, then global. Or just check all valid ones?
+        # Let's say we find the FIRST matching rule that triggers.
+        
+        for rule in rules:
+            rule_type = rule.get("type", "global")
+            rate = rule.get("rate", 0.0)
+            
+            is_match = False
+            
+            if rule_type == "global":
+                is_match = True
+            elif rule_type == "tile":
+                target_tiles = rule.get("tile_ids", [])
+                if tile_id in target_tiles:
+                    is_match = True
+            elif rule_type == "rect":
+                rx = rule.get("x", 0)
+                ry = rule.get("y", 0)
+                rw = rule.get("w", 0)
+                rh = rule.get("h", 0)
+                # Check rect in tile coordinates or pixel coordinates? 
+                # Let's assume tile coordinates for ease of editing usually, but pixels are more precise.
+                # Given json ease, tile coords are better.
+                if rx <= tx < rx + rw and ry <= ty < ry + rh:
+                    is_match = True
+                    
+            if is_match:
+                if random.random() < rate:
+                    enemies = rule.get("enemies", ["Slime"])
+                    # Pick random enemy from list? Or all? Usually random one or group.
+                    # Current battle system takes list of enemies. 
+                    # If list has multiple, do we spawn all? Or pick one?
+                    # Let's assume the list defines the "Troop" or allow picking 1-3.
+                    # For now, pass all defined in the list as the encounter group.
+                    self.emit("BattleStarted", {"enemies": enemies})
+                    return # Encounter triggered, stop checking
+                
+                # If matched but didn't trigger rate, should we continue to other rules?
+                # Usually no. If you are in a "Forest" rule, you shouldn't fall back to "Global" 
+                # unless explicitly designed. 
+                # Let's assume priority: first matching rule consumes the check.
+                return
 
     def register_obstacle(self, payload: dict):
         """
@@ -260,5 +278,17 @@ class MapSystem(Concept):
                 if u >= 256: u = 0
                 
                 pyxel.blt(x * 16, y * 16, 0, u, v, 16, 16)
+
+        # Draw Portals
+        portals = current_map.get("portals", [])
+        for portal in portals:
+            # Skip visualizing portals to Village (Map 0) as they are visually obvious
+            if portal.get("target_map") == 0:
+                continue
+                
+            px = portal.get("x") * 16
+            py = portal.get("y") * 16
+            color = 10 if (pyxel.frame_count // 5) % 2 == 0 else 9
+            pyxel.rectb(px, py, 16, 16, color)
 
 

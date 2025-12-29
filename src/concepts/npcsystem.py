@@ -17,6 +17,10 @@ class NpcSpawnedEvent(BaseModel):
     sprite_u: int
     sprite_v: int
 
+    
+class ItemFoundEvent(BaseModel):
+    item: Dict[str, Any]
+
 class NpcSystem(Concept):
     """
     Concept: NpcSystem
@@ -25,7 +29,8 @@ class NpcSystem(Concept):
     __events__ = {
         "DialogStarted": DialogStartedEvent,
         "DialogEnded": DialogEndedEvent,
-        "NpcSpawned": NpcSpawnedEvent
+        "NpcSpawned": NpcSpawnedEvent,
+        "ItemFound": ItemFoundEvent
     }
 
     def __init__(self, name: str = "NpcSystem"):
@@ -95,6 +100,27 @@ class NpcSystem(Concept):
             dist = ((px - nx)**2 + (py - ny)**2)**0.5
             if dist < 20:
                 self.current_npc = npc
+                
+                # Chest Logic
+                if npc.get("is_chest", False):
+                    self.current_line_index = 0
+                    if not npc.get("opened", False):
+                        npc["opened"] = True
+                        # Change Sprite to Opened Chest (Next tile)
+                        npc["sprite_u"] += 16 
+                        
+                        item_data = npc.get("item_reward", {"name": "Potion", "type": "item", "value": 1})
+                        item_name = item_data.get("name", "Item")
+                        
+                        self.active_dialog = f"Found {item_name}!"
+                        print(f"Chest opened! Got {item_name}")
+                        self.emit("DialogStarted", {"npc_id": npc["id"]})
+                        self.emit("ItemFound", {"item": item_data})
+                    else:
+                        self.active_dialog = "It's empty."
+                        self.emit("DialogStarted", {"npc_id": npc["id"]})
+                    return
+
                 self.current_line_index = 0
                 self.active_dialog = npc["dialog"][0]
                 print(f"Interacted with NPC {npc['id']}: {self.active_dialog}")

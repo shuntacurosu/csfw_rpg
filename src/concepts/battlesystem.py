@@ -48,6 +48,7 @@ class BattleSystem(Concept):
             "hp": 20, "max_hp": 20, "atk": 5, "def": 2, "spd": 3, "equipment": {}
         }
         self.commands = ["Attack", "Skill", "Escape"]
+        self.resources_loaded = False
 
     def load(self, payload: dict):
         """Action: load"""
@@ -77,6 +78,20 @@ class BattleSystem(Concept):
         self.battle_state = "COMMAND_SELECT"
         self.command_cursor = 0
         self.target_cursor = 0
+        self.target_cursor = 0
+        
+        if not self.resources_loaded:
+            try:
+                try:
+                    from src.concepts.enemy_assets import load_enemy_assets
+                except ImportError:
+                    from concepts.enemy_assets import load_enemy_assets
+                    
+                load_enemy_assets()
+                self.resources_loaded = True
+                print("[BattleSystem] Loaded enemy sprites via script")
+            except Exception as e:
+                print(f"[BattleSystem] Failed to load enemy sprites: {e}")
         
         for name in enemy_names:
             template = self.enemy_templates.get(name)
@@ -286,7 +301,8 @@ class BattleSystem(Concept):
                 # Draw Sprite
                 u = enemy.get("sprite_u", 0)
                 v = enemy.get("sprite_v", 32)
-                pyxel.blt(x, y, 0, u, v, 16, 16, 0)
+                bank = enemy.get("sprite_bank", 0)
+                pyxel.blt(x, y, bank, u, v, 16, 16, 0)
                 
                 # Draw Target Cursor
                 if self.battle_state == "TARGET_SELECT" and self.target_cursor == i:

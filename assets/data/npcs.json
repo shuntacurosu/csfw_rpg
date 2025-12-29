@@ -94,6 +94,23 @@
                 "I'll have more items soon!",
                 "For now, feel free to browse."
             ]
+        },
+        {
+            "id": 20,
+            "map_id": 12,
+            "x": 120,
+            "y": 120,
+            "sprite_u": 0,
+            "sprite_v": 48,
+            "mobile": false,
+            "is_chest": true,
+            "dialog": [],
+            "item_reward": {
+                "name": "Steel Blade",
+                "type": "weapon",
+                "atk_bonus": 15,
+                "price": 0
+            }
         }
     ]
 }

@@ -437,3 +437,13 @@ synchronizations:
         payload:
           slot: event.slot
           item: event.item
+
+  - name: HandleChestItem
+    when:
+      source: NpcSystem
+      event: ItemFound
+    then:
+      - target: Player
+        action: add_to_inventory
+        payload:
+          item: event.item
