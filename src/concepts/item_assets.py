@@ -15,6 +15,7 @@ def load_item_sprites():
     LOCK = 10 # Yellow
     BLADE = 7 # White
     SHADOW = 13 # Gray
+    ROOF = 8 # Red
     
     # -----------------------------------------------
     # Chest Closed (16x16) at (0, 48)
@@ -24,15 +25,11 @@ def load_item_sprites():
     img.rect(base_x, base_y, 16, 16, TRANSPARENT)
     
     # 2. Draw Body
-    # Fill main box
     img.rect(base_x+2, base_y+5, 12, 9, BODY)
-    # Outline main box
     img.rectb(base_x+2, base_y+5, 12, 9, OUTLINE)
     
-    # 3. Draw Lid (Top part)
-    # Fill lid
+    # 3. Draw Lid
     img.rect(base_x+1, base_y+3, 14, 3, LID)
-    # Outline lid
     img.rectb(base_x+1, base_y+3, 14, 3, OUTLINE)
     
     # 4. Lock
@@ -50,17 +47,11 @@ def load_item_sprites():
     img.rect(base_x+2, base_y+5, 12, 9, BODY)
     img.rectb(base_x+2, base_y+5, 12, 9, OUTLINE)
     
-    # 3. Draw Opened Lid (Shifted Up and narrower perspective?)
-    # Just draw lid higher up or behind.
-    # Let's draw it "open" pointing up/back.
+    # 3. Draw Opened Lid
     img.rect(base_x+2, base_y+1, 12, 3, LID)
     img.rectb(base_x+2, base_y+1, 12, 3, OUTLINE)
     
     # 4. Dark Inside
-    img.rect(base_x+3, base_y+6, 10, 7, 0) # Use 0 (Transparent) to show floor? 
-    # Or use Dark Color (1 or 5) to look like deep shadow?
-    # If transparent, it shows floor. Floor is noisy.
-    # Better to use black/dark.
     img.rect(base_x+3, base_y+6, 10, 7, 1) # Dark inside
 
     # -----------------------------------------------
@@ -75,12 +66,30 @@ def load_item_sprites():
         img.pset(base_x+12-i, base_y+4+i, BLADE) # Blade
         img.pset(base_x+13-i, base_y+5+i, SHADOW) # Shadow
         
-    # Outline for sword? Maybe just edges.
-    
     # 3. Hilt
     img.line(base_x+4, base_y+12, base_x+2, base_y+14, BODY)
     
     # 4. Guard
     img.line(base_x+8, base_y+9, base_x+5, base_y+12, LOCK)
 
-    print("[ItemAssets] Generated chest and sword sprites at y=48 with outlines")
+    # -----------------------------------------------
+    # House Exterior (16x16) at (48, 48) -> Tile ID 51
+    # (row 3, col 3) => 3*16 + 3 = 51
+    base_x, base_y = 48, 48
+    img.rect(base_x, base_y, 16, 16, 3) # Fill with Path color (Pink/Brown)
+    
+    # Roof (Red/Brown)
+    img.line(base_x+0, base_y+6, base_x+8, base_y+0, ROOF)
+    img.line(base_x+15, base_y+6, base_x+7, base_y+0, ROOF)
+    img.rect(base_x+1, base_y+6, 14, 2, ROOF) # Roof bottom
+    img.rect(base_x+2, base_y+2, 12, 4, ROOF) # Roof fill
+    
+    # Walls (White/Beige)
+    img.rect(base_x+2, base_y+8, 12, 8, BLADE) # White wall
+    img.rectb(base_x+2, base_y+8, 12, 8, OUTLINE) # Outline
+    
+    # Door (Brown)
+    img.rect(base_x+6, base_y+11, 4, 5, BODY)
+    img.rectb(base_x+6, base_y+11, 4, 5, OUTLINE)
+
+    print("[ItemAssets] Generated chest, sword, and house sprites at y=48")

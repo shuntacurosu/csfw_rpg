@@ -106,10 +106,12 @@ class Player(Concept):
         self.inventory = [] # List of Item Dicts
         self.equipment = {
             "weapon": None,
+            "shield": None, # Added
             "head": None,
             "body": None,
             "arms": None,
-            "legs": None
+            "legs": None,
+            "accessory": None # Added
         }
 
     def add_xp(self, payload: dict):

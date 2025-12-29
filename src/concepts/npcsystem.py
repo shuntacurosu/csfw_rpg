@@ -112,11 +112,15 @@ class NpcSystem(Concept):
                         item_data = npc.get("item_reward", {"name": "Potion", "type": "item", "value": 1})
                         item_name = item_data.get("name", "Item")
                         
-                        self.active_dialog = f"Found {item_name}!"
+                        dialog_text = f"Found {item_name}!"
+                        npc["dialog"] = [dialog_text] # Inject dialog based on item
+                        
+                        self.active_dialog = dialog_text
                         print(f"Chest opened! Got {item_name}")
                         self.emit("DialogStarted", {"npc_id": npc["id"]})
                         self.emit("ItemFound", {"item": item_data})
                     else:
+                        npc["dialog"] = ["It's empty."]
                         self.active_dialog = "It's empty."
                         self.emit("DialogStarted", {"npc_id": npc["id"]})
                     return

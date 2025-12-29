@@ -277,9 +277,10 @@ class MapSystem(Concept):
         for y, row in enumerate(tiles):
             for x, tile in enumerate(row):
                 # 0 = Grass (0,0), 1 = Wall (16,0), 2 = Water (32,0), 3 = Path (48,0)
-                # Sprite sheet is 16x16 grid. My gen_pixel_art.py put them in a row.
-                u = tile * 16
-                v = 0
+                # Sprite sheet is 16x16 grid. 
+                # Convert ID to (u, v)
+                u = (tile % 16) * 16
+                v = (tile // 16) * 16
                 
                 # Check bounds inside sprite sheet (256 width) just in case
                 if u >= 256: u = 0

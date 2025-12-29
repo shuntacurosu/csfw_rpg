@@ -30,7 +30,7 @@ class MenuSystem(Concept):
         self.state = "MAIN" # MAIN, ITEMS, EQUIP, STATUS, OPTIONS
         self.cursor = 0
         self.menu_items = ["Status", "Items", "Equipment", "Map", "Options", "Close"]
-        self.equip_slots = ["weapon", "shield", "head", "body", "arms", "legs"]
+        self.equip_slots = ["weapon", "shield", "head", "body", "arms", "legs", "accessory"]
         self.sub_state = "SELECT_SLOT"
         self.sub_cursor = 0
         
