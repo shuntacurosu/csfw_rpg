@@ -243,11 +243,20 @@ class NpcSystem(Concept):
         import pyxel
         
         for npc in self.active_npcs:
-             u = npc.get("sprite_u", 0)
-             v = npc.get("sprite_v", 32)
-             # Use color 0 (black) as transparent
-             # Sprites must have black (color 0) backgrounds to be transparent
-             pyxel.blt(npc["x"], npc["y"], 0, u, v, 16, 16, 0)
+             if npc.get("is_chest"):
+                 # Chest Logic: Open vs Closed
+                 # Using Item Assets (generated at y=48)
+                 # Closed: u=0, v=48
+                 # Opened: u=16, v=48
+                 u = 16 if npc.get("opened") else 0
+                 v = 48
+                 pyxel.blt(npc["x"], npc["y"], 0, u, v, 16, 16, 0)
+             else:
+                 u = npc.get("sprite_u", 0)
+                 v = npc.get("sprite_v", 32)
+                 # Use color 0 (black) as transparent
+                 # Sprites must have black (color 0) backgrounds to be transparent
+                 pyxel.blt(npc["x"], npc["y"], 0, u, v, 16, 16, 0)
         
         if self.active_dialog:
              # Draw box at bottom

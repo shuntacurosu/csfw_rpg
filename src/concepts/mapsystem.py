@@ -33,6 +33,7 @@ class MapSystem(Concept):
         self.current_map_id = 0
         self.dynamic_obstacles = []
         self.npc_system = None  # Reference to NpcSystem for live collision
+        self.last_check_pos = (-1, -1)
 
     def set_npc_system(self, npc_sys):
         """Set reference to NpcSystem for live NPC collision detection"""
@@ -104,8 +105,9 @@ class MapSystem(Concept):
 
         portals = current_map.get("portals", [])
         for portal in portals:
+            print(f"DEBUG: Check Portal Player({px},{py}) vs Portal({portal['x']},{portal['y']})")
             if portal["x"] == px and portal["y"] == py:
-                print(f"Portal Triggered! To Map {portal['target_map']}")
+                print(f"Portal Triggered! To Map {portal['target_map']} at {px},{py}")
                 # Switch Map
                 self.load({"map_id": portal["target_map"]})
                 
@@ -205,6 +207,11 @@ class MapSystem(Concept):
         if 0 <= tx < map_w and 0 <= ty < map_h:
             tile_id = current_map["tiles"][ty][tx]
             
+        # Prevent multi-check on same tile (debounce)
+        if self.last_check_pos == (tx, ty):
+            return
+        self.last_check_pos = (tx, ty)
+            
         # Evaluate Rules
         # We check specific rules first, then global. Or just check all valid ones?
         # Let's say we find the FIRST matching rule that triggers.
@@ -279,16 +286,26 @@ class MapSystem(Concept):
                 
                 pyxel.blt(x * 16, y * 16, 0, u, v, 16, 16)
 
-        # Draw Portals
+        # Draw Portals (Visual Indicators)
         portals = current_map.get("portals", [])
         for portal in portals:
-            # Skip visualizing portals to Village (Map 0) as they are visually obvious
-            if portal.get("target_map") == 0:
-                continue
+            tx = portal.get("x")
+            ty = portal.get("y")
+            target_map = portal.get("target_map")
+            
+            x = tx * 16
+            y = ty * 16
+            
+            # Dungeon Entrance (To Map 10, 11, 12)
+            if target_map in [10, 11, 12]:
+                # Draw Cave Entrance
+                pyxel.rect(x + 3, y + 3, 10, 10, 0) # Black hole
+                pyxel.rectb(x + 2, y + 2, 12, 12, 4) # Frame
                 
-            px = portal.get("x") * 16
-            py = portal.get("y") * 16
-            color = 10 if (pyxel.frame_count // 5) % 2 == 0 else 9
-            pyxel.rectb(px, py, 16, 16, color)
+            # Exit to World (To Map 1) from Dungeon (Map 10-12)
+            elif target_map == 1 and self.current_map_id in [10, 11, 12]:
+                # Draw Stairs Up
+                pyxel.rect(x + 3, y + 3, 10, 10, 13) # Gray base
+                pyxel.rect(x + 5, y + 5, 6, 6, 7)  # White steps
 
 

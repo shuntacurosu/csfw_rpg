@@ -447,3 +447,14 @@ synchronizations:
         action: add_to_inventory
         payload:
           item: event.item
+
+  - name: SyncPositionToMenu
+    when:
+      source: Player
+      event: Moved
+    then:
+      - target: MenuSystem
+        action: update_position
+        payload:
+          x: event.x
+          y: event.y

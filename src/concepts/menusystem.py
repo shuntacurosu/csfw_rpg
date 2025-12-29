@@ -29,7 +29,7 @@ class MenuSystem(Concept):
         self.active = False
         self.state = "MAIN" # MAIN, ITEMS, EQUIP, STATUS, OPTIONS
         self.cursor = 0
-        self.menu_items = ["Status", "Items", "Equipment", "Options", "Close"]
+        self.menu_items = ["Status", "Items", "Equipment", "Map", "Options", "Close"]
         self.equip_slots = ["weapon", "shield", "head", "body", "arms", "legs"]
         self.sub_state = "SELECT_SLOT"
         self.sub_cursor = 0
@@ -43,6 +43,34 @@ class MenuSystem(Concept):
         }
         self.inventory = []
         self.equipment = {}
+        
+        # World Map Data
+        self.world_map = None
+        self.player_x = 0
+        self.player_y = 0
+        self._load_world_map()
+
+    def _load_world_map(self):
+        import json
+        import os
+        try:
+            # Assuming execution from root
+            path = "assets/data/maps.json" 
+            if os.path.exists(path):
+                with open(path, 'r') as f:
+                    data = json.load(f)
+                    for m in data.get("maps", []):
+                        if m["id"] == 1:
+                            self.world_map = m
+                            break
+            print(f"World Map Loaded: {self.world_map is not None}")
+        except Exception as e:
+            print(f"Failed to load world map: {e}")
+
+    def update_position(self, payload: dict):
+        """Action: update_position"""
+        self.player_x = payload.get("x", 0)
+        self.player_y = payload.get("y", 0)
 
     def _get_eligible_items(self):
         """Get items that can be equipped in the currently selected slot."""
@@ -84,6 +112,12 @@ class MenuSystem(Concept):
         if not self.active:
             if key == "MENU":
                 self.open({})
+            return
+
+        if self.state == "MAP":
+            if key == "CANCEL" or key == "CONFIRM" or key == "MENU":
+                self.state = "MAIN"
+                self.cursor = 0
             return
 
         # Handle EQUIPMENT sub-state navigation separately
@@ -144,6 +178,8 @@ class MenuSystem(Concept):
                 self.cursor = 0
             elif selection == "Equipment":
                 self.state = "EQUIPMENT"
+            elif selection == "Map":
+                self.state = "MAP"
                 self.cursor = 0
                 self.sub_cursor = 0
                 self.sub_state = "SELECT_SLOT"
@@ -193,6 +229,37 @@ class MenuSystem(Concept):
                 col = 10 if i == self.cursor else 7
                 pyxel.text(x + 20, y + 30 + i * 15, item, col)
                 
+        elif self.state == "MAP":
+            pyxel.text(x + 10, y + 10, "-- WORLD MAP --", 7)
+            
+            # Map Area
+            mx = x + 24
+            my = y + 25
+            pyxel.rectb(mx - 1, my - 1, 130, 130, 1)
+            
+            if self.world_map:
+                tiles = self.world_map.get("tiles", [])
+                cols = {0: 11, 1: 5, 2: 12, 3: 4, 4: 3, 5: 10, 6: 13, 7: 9}
+                for ty, row in enumerate(tiles):
+                    for tx, tile in enumerate(row):
+                        col = cols.get(tile, 0)
+                        if col != 0:
+                            pyxel.rect(mx + tx*2, my + ty*2, 2, 2, col)
+                
+                # Draw Portals
+                # Filter dungeon portals (Target Map 10, 11, 12)
+                for p in self.world_map.get("portals", []):
+                    if p.get("target_map") in [10, 11, 12]:
+                        col = 10 if (pyxel.frame_count // 5) % 2 == 0 else 9
+                        px = mx + p.get("x") * 2
+                        py = my + p.get("y") * 2
+                        pyxel.rectb(px - 1, py - 1, 4, 4, col)
+                        
+                # Draw Player
+                plx = mx + int(self.player_x / 8)
+                ply = my + int(self.player_y / 8)
+                pyxel.rect(plx, ply, 2, 2, 8)
+
         elif self.state == "STATUS":
             s = self.player_stats
             pyxel.text(x + 10, y + 10, "-- STATUS --", 7)

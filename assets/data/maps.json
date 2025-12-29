@@ -4591,18 +4591,11 @@
                     "target_y": 14
                 },
                 {
-                    "x": 40,
-                    "y": 40,
-                    "target_map": 2,
-                    "target_x": 8,
-                    "target_y": 8
-                },
-                {
-                    "x": 20,
-                    "y": 20,
+                    "x": 30,
+                    "y": 31,
                     "target_map": 10,
                     "target_x": 8,
-                    "target_y": 14
+                    "target_y": 13
                 }
             ],
             "encounter_rate": 0.1
@@ -4905,11 +4898,11 @@
             "objects": [],
             "portals": [
                 {
-                    "x": 8,
-                    "y": 15,
-                    "target_map": 1,
-                    "target_x": 30,
-                    "target_y": 31
+                    "x": 30,
+                    "y": 31,
+                    "target_map": 10,
+                    "target_x": 8,
+                    "target_y": 13
                 }
             ],
             "encounter_rate": 0.0
@@ -5212,17 +5205,17 @@
             "portals": [
                 {
                     "x": 8,
-                    "y": 15,
+                    "y": 14,
                     "target_map": 1,
-                    "target_x": 20,
-                    "target_y": 21
+                    "target_x": 30,
+                    "target_y": 30
                 },
                 {
                     "x": 8,
                     "y": 1,
                     "target_map": 11,
                     "target_x": 8,
-                    "target_y": 14
+                    "target_y": 13
                 }
             ],
             "encounter_rules": [
@@ -5533,7 +5526,7 @@
             "portals": [
                 {
                     "x": 8,
-                    "y": 15,
+                    "y": 14,
                     "target_map": 10,
                     "target_x": 8,
                     "target_y": 2
@@ -5543,7 +5536,7 @@
                     "y": 1,
                     "target_map": 12,
                     "target_x": 8,
-                    "target_y": 14
+                    "target_y": 13
                 }
             ],
             "encounter_rules": [
@@ -5855,7 +5848,7 @@
             "portals": [
                 {
                     "x": 8,
-                    "y": 15,
+                    "y": 14,
                     "target_map": 11,
                     "target_x": 8,
                     "target_y": 2

@@ -55,6 +55,21 @@ class GameLoop(Concept):
              print(f"Warning: Sprite sheet not found at {img_path}")
              # Fallback already in place
         
+        # Generate/Load Programmatic Assets
+        print("DEBUG: Starting asset generation...")
+        try:
+            from concepts.enemy_assets import load_enemy_assets
+            load_enemy_assets()
+            print("DEBUG: Enemy sprites loaded.")
+            
+            from concepts.item_assets import load_item_sprites
+            load_item_sprites()
+            print("DEBUG: Item sprites loaded.")
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            print(f"Asset Generation Error: {e}")
+
         self.emit("Initialized", {})
 
     def _create_fallback_assets(self):
