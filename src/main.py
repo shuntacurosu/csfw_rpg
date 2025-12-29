@@ -15,6 +15,7 @@ from concepts.gamestate import GameState
 from concepts.camerasystem import CameraSystem
 from concepts.menusystem import MenuSystem
 from concepts.shopsystem import ShopSystem
+from concepts.effectsystem import EffectSystem
 
 try:
     from cs_framework.engine.runner import Runner
@@ -185,6 +186,7 @@ def get_runner():
     cam_sys = CameraSystem("CameraSystem")
     menu_sys = MenuSystem("MenuSystem")
     shop_sys = ShopSystem("ShopSystem")
+    eff_sys = EffectSystem("EffectSystem")
     
     # Register Concepts
     runner.register(loop)
@@ -197,6 +199,7 @@ def get_runner():
     runner.register(cam_sys)
     runner.register(menu_sys)
     runner.register(shop_sys)
+    runner.register(eff_sys)
     
     # Concept Map for Rule Loading
     concepts_map = {
@@ -209,7 +212,8 @@ def get_runner():
         "GameState": game_state,
         "CameraSystem": cam_sys,
         "MenuSystem": menu_sys,
-        "ShopSystem": shop_sys
+        "ShopSystem": shop_sys,
+        "EffectSystem": eff_sys
     }
     
     # Inject runner into GameLoop so it can drive the loop

@@ -7,6 +7,7 @@ class MapLoadedEvent(BaseModel):
     map_id: int
     width: int
     height: int
+    map_name: str
 
 class MoveValidEvent(BaseModel):
     x: float
@@ -52,14 +53,20 @@ class MapSystem(Concept):
                 return self.map_data[mid].get("width", 16), self.map_data[mid].get("height", 16)
             return 16, 16
 
+        def get_map_name(mid):
+            if mid in self.map_data:
+                return self.map_data[mid].get("name", f"Map {mid}")
+            return f"Map {mid}"
+
         # Logic for switch vs initial load...
         # If target_id is present, we assume data is loaded. 
         if target_id is not None:
              self.current_map_id = target_id
              self.dynamic_obstacles = [] 
              w, h = get_map_dims(self.current_map_id)
-             self.emit("MapLoaded", {"map_id": self.current_map_id, "width": w, "height": h})
-             print(f"Switched to Map {self.current_map_id}")
+             map_name = get_map_name(self.current_map_id)
+             self.emit("MapLoaded", {"map_id": self.current_map_id, "width": w, "height": h, "map_name": map_name})
+             print(f"Switched to Map {self.current_map_id} ({map_name})")
              return
 
         print(f"MapSystem.load called with {payload}")
@@ -74,8 +81,9 @@ class MapSystem(Concept):
                  self.map_data = {m["id"]: m for m in data.get("maps", [])}
                  # Initial load emit
                  w, h = get_map_dims(self.current_map_id)
-                 print(f"Map {self.current_map_id} loaded. Size: {w}x{h}")
-                 self.emit("MapLoaded", {"map_id": self.current_map_id, "width": w, "height": h})
+                 map_name = get_map_name(self.current_map_id)
+                 print(f"Map {self.current_map_id} loaded. Name: {map_name} Size: {w}x{h}")
+                 self.emit("MapLoaded", {"map_id": self.current_map_id, "width": w, "height": h, "map_name": map_name})
         else:
              print(f"Map file not found: {full_path}")
 
