@@ -27,6 +27,8 @@ synchronizations:
     then:
       - target: InputSystem
         action: check_input
+      - target: NpcSystem
+        action: update
 
   - name: SyncGameStateToInput
     when:

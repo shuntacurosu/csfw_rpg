@@ -30,7 +30,12 @@ class MapSystem(Concept):
         super().__init__(name)
         self.map_data = {}
         self.current_map_id = 0
-        self.dynamic_obstacles = [] 
+        self.dynamic_obstacles = []
+        self.npc_system = None  # Reference to NpcSystem for live collision
+
+    def set_npc_system(self, npc_sys):
+        """Set reference to NpcSystem for live NPC collision detection"""
+        self.npc_system = npc_sys 
 
     def load(self, payload: dict):
         """
@@ -114,27 +119,27 @@ class MapSystem(Concept):
         
         is_valid = True
         
-        # Check dynamic obstacles (simple box)
+        # Check NPC collision (live positions from NpcSystem)
         ph_x = x + 4
         ph_y = y + 4
         ph_w = 8
         ph_h = 8
         
-        for obs in self.dynamic_obstacles:
-            ox = obs.get("x")
-            oy = obs.get("y")
-            ow = obs.get("w", 16)
-            oh = obs.get("h", 16)
-            
-            if (ph_x < ox + ow and
-                ph_x + ph_w > ox and
-                ph_y < oy + oh and
-                ph_y + ph_h > oy):
-                is_valid = False
-                break
+        # Use live NPC positions instead of cached obstacles
+        if self.npc_system:
+            for npc in self.npc_system.active_npcs:
+                ox = npc.get("x", 0)
+                oy = npc.get("y", 0)
+                ow = 16
+                oh = 16
+                
+                if (ph_x < ox + ow and
+                    ph_x + ph_w > ox and
+                    ph_y < oy + oh and
+                    ph_y + ph_h > oy):
+                    is_valid = False
+                    break
         
-        if not is_valid: return
-
         if not is_valid: return
 
         tiles = current_map["tiles"]

@@ -214,6 +214,15 @@ def get_runner():
     
     # Inject runner into GameLoop so it can drive the loop
     loop.runner = runner
+    
+    # Set MapSystem reference for NPC collision detection
+    npc_sys.set_map_system(map_sys)
+    
+    # Set NpcSystem reference for player-NPC collision (live positions)
+    map_sys.set_npc_system(npc_sys)
+    
+    # Set Player reference for NPC-to-Player collision avoidance
+    npc_sys.set_player(player)
 
     # Load Rules
     load_rules(runner, "src/sync/rules.yaml", concepts_map)

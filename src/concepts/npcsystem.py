@@ -35,6 +35,19 @@ class NpcSystem(Concept):
         self.active_dialog = None # Current string to show
         self.current_npc = None # The NPC object being talked to
         self.current_line_index = 0
+        # Movement
+        self.move_timer = 0
+        self.move_interval = 60  # Move every 60 frames (1 second at 60fps)
+        self.map_system = None  # Reference to MapSystem for collision
+        self.player = None  # Reference to Player for collision
+
+    def set_map_system(self, map_sys):
+        """Set reference to MapSystem for collision detection"""
+        self.map_system = map_sys
+
+    def set_player(self, player):
+        """Set reference to Player for collision detection"""
+        self.player = player
 
     def load(self, payload: dict):
         """Action: load"""
@@ -55,7 +68,11 @@ class NpcSystem(Concept):
         if current_map_id is None:
             current_map_id = 0
             
-        self.active_npcs = [npc for npc in self.npcs if npc.get("map_id") == current_map_id]
+        self.active_npcs = [npc.copy() for npc in self.npcs if npc.get("map_id") == current_map_id]
+        # Store original positions for mobile NPCs
+        for npc in self.active_npcs:
+            npc["origin_x"] = npc["x"]
+            npc["origin_y"] = npc["y"]
         print(f"Active NPCs for Map {current_map_id}: {len(self.active_npcs)}")
 
         for npc in self.active_npcs:
@@ -103,6 +120,97 @@ class NpcSystem(Concept):
         self.active_dialog = None
         self.current_npc = None
         self.current_line_index = 0
+
+    def update(self, payload: dict):
+        """Action: update - Move mobile NPCs periodically"""
+        import random
+        
+        self.move_timer += 1
+        if self.move_timer < self.move_interval:
+            return
+        
+        self.move_timer = 0
+        
+        for npc in self.active_npcs:
+            # Skip non-mobile NPCs
+            if not npc.get("mobile", False):
+                continue
+            
+            # Skip if this NPC is in conversation
+            if self.current_npc and self.current_npc["id"] == npc["id"]:
+                continue
+            
+            # Random movement direction
+            dx = random.choice([-8, 0, 0, 8])  # More likely to stay still
+            dy = random.choice([-8, 0, 0, 8])
+            
+            if dx == 0 and dy == 0:
+                continue
+            
+            new_x = npc["x"] + dx
+            new_y = npc["y"] + dy
+            
+            # Limit movement range from origin (32px radius)
+            origin_x = npc.get("origin_x", npc["x"])
+            origin_y = npc.get("origin_y", npc["y"])
+            max_range = 32
+            
+            if abs(new_x - origin_x) > max_range or abs(new_y - origin_y) > max_range:
+                continue
+            
+            # Basic bounds check (stay on screen)
+            if not (0 <= new_x <= 240 and 0 <= new_y <= 200):
+                continue
+            
+            # Collision check with map tiles
+            if self._is_walkable(new_x, new_y):
+                npc["x"] = new_x
+                npc["y"] = new_y
+
+    def _is_walkable(self, x, y):
+        """Check if position is walkable (not wall/water/mountain/player)"""
+        # Check player collision first
+        if self.player:
+            px = self.player.x
+            py = self.player.y
+            # Simple box collision (both are 16x16)
+            if (x < px + 16 and x + 16 > px and
+                y < py + 16 and y + 16 > py):
+                return False
+        
+        if not self.map_system:
+            return True  # No map reference, allow movement
+        
+        current_map = self.map_system.map_data.get(self.map_system.current_map_id)
+        if not current_map:
+            return True
+        
+        tiles = current_map.get("tiles", [])
+        map_w = current_map.get("width", 16)
+        map_h = current_map.get("height", 16)
+        
+        # Check all 4 corners of the NPC (16x16 sprite)
+        margin = 4
+        points = [
+            (x + margin, y + margin),
+            (x + 16 - margin, y + margin),
+            (x + margin, y + 16 - margin),
+            (x + 16 - margin, y + 16 - margin)
+        ]
+        
+        for px, py in points:
+            tx = int(px // 16)
+            ty = int(py // 16)
+            
+            if tx < 0 or tx >= map_w or ty < 0 or ty >= map_h:
+                return False
+            
+            tile_id = tiles[ty][tx]
+            # Block tiles: 1=Wall, 2=Water, 6=Mountain
+            if tile_id in [1, 2, 6]:
+                return False
+        
+        return True
 
     def draw(self, payload: dict):
         """Action: draw"""
