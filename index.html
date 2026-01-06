@@ -56,6 +56,7 @@ import pyxel
 
 # Add the pyxapp to sys.path
 sys.path.insert(0, "/src.pyxapp")
+sys.path.insert(0, "/src.pyxapp/src")  # Add inner src so 'concepts' can be imported directly
 
 # Important: Switch to the directory so relative paths work if any (though zip import handles most)
 os.chdir("/")
