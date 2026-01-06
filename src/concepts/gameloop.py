@@ -41,7 +41,7 @@ class GameLoop(Concept):
         # Load main sprites (Bank 0)
         sprites_path = os.path.join(base_dir, "assets", "images", "sprites.png").replace("\\", "/")
         if os.path.exists(sprites_path):
-            pyxel.images[0].load(0, 0, sprites_path)
+            pyxel.image(0).load(0, 0, sprites_path)
             print(f"Loaded sprites: {sprites_path}")
         else:
             raise FileNotFoundError(f"Sprite sheet not found: {sprites_path}")
@@ -49,7 +49,7 @@ class GameLoop(Concept):
         # Load enemy sprites (Bank 1)
         enemies_path = os.path.join(base_dir, "assets", "images", "enemies.png").replace("\\", "/")
         if os.path.exists(enemies_path):
-            pyxel.images[1].load(0, 0, enemies_path)
+            pyxel.image(1).load(0, 0, enemies_path)
             print(f"Loaded enemies: {enemies_path}")
         else:
             raise FileNotFoundError(f"Enemy sprite sheet not found: {enemies_path}")
