@@ -221,9 +221,14 @@ class MapSystem(Concept):
         map_w = current_map.get("width", 16)
         map_h = current_map.get("height", 16)
         
+        # Use ground layer for encounter tile check (after layer refactoring)
+        layers = current_map.get("layers", {})
+        ground_tiles = layers.get("ground", [])
+        
         tile_id = 0
         if 0 <= tx < map_w and 0 <= ty < map_h:
-            tile_id = current_map["tiles"][ty][tx]
+            if ty < len(ground_tiles) and tx < len(ground_tiles[ty]):
+                tile_id = ground_tiles[ty][tx]
             
         # Prevent multi-check on same tile (debounce)
         if self.last_check_pos == (tx, ty):
