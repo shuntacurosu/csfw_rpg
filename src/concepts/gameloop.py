@@ -61,15 +61,7 @@ class GameLoop(Concept):
         Action: run
         """
         import pyxel
-        try:
-             pyxel.run(self._update_wrapper, self._draw_wrapper)
-        except SystemExit:
-             print("Pyxel loop started (SystemExit caught)")
-        except Exception as e:
-             if "unwind" in str(e):
-                 print("Pyxel loop started (unwind caught)")
-             else:
-                 raise
+        pyxel.run(self._update_wrapper, self._draw_wrapper)
 
     def _update_wrapper(self):
         # This method is called by Pyxel every frame

@@ -92,7 +92,8 @@ except Exception as e:
     import traceback
     traceback.print_exc()
 `;
-                await pyodide.runPythonAsync(code);
+                // await pyodide.runPythonAsync(code);
+                pyodide.runPython(code);
 
             } catch (error) {
                 if (error.message === 'unwind') {
