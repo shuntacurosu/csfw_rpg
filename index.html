@@ -54,47 +54,34 @@ import sys
 import os
 import pyxel
 
-# Add the pyxapp to sys.path
-sys.path.insert(0, "/src.pyxapp")
-sys.path.insert(0, "/src.pyxapp/src")  # Add inner src so 'concepts' can be imported directly
 
-# Important: Switch to the directory so relative paths work if any (though zip import handles most)
+# Add the pyxapp to sys.path
+# sys.path.insert(0, "/src.pyxapp")
+# sys.path.insert(0, "/src.pyxapp/src") 
+
+# Extract the zip file to the file system
+# This avoids issues with zipimport not handling subdirectories in sys.path
+import zipfile
+import os
+import sys
+
+print("Extracting src.pyxapp...")
+with zipfile.ZipFile('/src.pyxapp', 'r') as z:
+    z.extractall('/')
+
+# Now the files are at /src/main.py, /src/concepts/..., etc.
+# We need to add /src to sys.path so 'concepts' module can be found
+sys.path.insert(0, "/src")
+
+# Important: Switch to the directory so relative paths work if any
 os.chdir("/")
 
-# Execute main.py inside the pyxapp
-# We use runpy to execute it as a script/module
+print("Files in /src:", os.listdir("/src"))
+
+# Execute main.py
 import runpy
 try:
-    # Try running as a script inside the zip
-    # Construct the path to main.py inside the zip
-    # Based on 'pyxel package src src/main.py', the structure likely has 'src' as root or flattened.
-    # Let's try running the startup script directly if possible, or import main.
-    
-    # Check zip content structure (for debugging, can be removed)
-    import zipfile
-    with zipfile.ZipFile('/src.pyxapp', 'r') as z:
-        print("Zip contents:", z.namelist())
-    
-    # Assuming 'src/main.py' is the entry point within the zip
-    # If the zip root is the 'src' dir content, then it is just 'main'
-    
-    # According to pyxel package behavior:
-    # "pyxel package src src/main.py" creates a zip where 'src' folder content is at root?
-    # No, usually it preserves the folder if not careful.
-    # Let's assume standard behavior: 'src' folder content is at root.
-    
-    import main
-    
-    # If main.py doesn't run automatically on import (it shouldn't if guarded by if __name__),
-    # we need to trigger it. But wait, main.py in this project usually starts things at the top level?
-    # Let's check main.py content from memory...
-    # It defines classes and then runs 'if __name__ == "__main__":' or similar?
-    # No, it constructs and runs directly in global scope in the original file I recall?
-    # Ah, I see "Runner(...)" call inside a block?
-    # Usually it's better to use run_path
-    
-    runpy.run_path("/src.pyxapp/src/main.py", run_name="__main__")
-    
+    runpy.run_path("/src/main.py", run_name="__main__")
 except Exception as e:
     print(f"Error executing game: {e}")
     import traceback
