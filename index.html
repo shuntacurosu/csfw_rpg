@@ -12,6 +12,7 @@
         <h1>CSFW RPG</h1>
         <p id="status">Loading Pyodide...</p>
     </div>
+    <div id="canvas-container"></div>
     <script>
         async function main() {
             const status = document.getElementById('status');
@@ -36,18 +37,74 @@
                 status.textContent = 'Installing pyxel...';
                 await micropip.install('pyxel');
 
+                // Download and Setup Game Package
+                status.textContent = 'Downloading game data...';
+                const response = await fetch('src.pyxapp');
+                const buffer = await response.arrayBuffer();
+                pyodide.FS.writeFile('/src.pyxapp', new Uint8Array(buffer));
+
                 // Run the game
                 status.textContent = 'Starting game...';
                 document.getElementById('loading').style.display = 'none';
 
-                // Fetch and run main.py
-                const response = await fetch('https://raw.githubusercontent.com/shuntacurosu/csfw_rpg/main/src/main.py');
-                const code = await response.text();
+                // Set up environment and run
+                // Adding src.pyxapp to sys.path allows importing modules from inside the zip
+                const code = `
+import sys
+import os
+import pyxel
+
+# Add the pyxapp to sys.path
+sys.path.insert(0, "/src.pyxapp")
+
+# Important: Switch to the directory so relative paths work if any (though zip import handles most)
+os.chdir("/")
+
+# Execute main.py inside the pyxapp
+# We use runpy to execute it as a script/module
+import runpy
+try:
+    # Try running as a script inside the zip
+    # Construct the path to main.py inside the zip
+    # Based on 'pyxel package src src/main.py', the structure likely has 'src' as root or flattened.
+    # Let's try running the startup script directly if possible, or import main.
+    
+    # Check zip content structure (for debugging, can be removed)
+    import zipfile
+    with zipfile.ZipFile('/src.pyxapp', 'r') as z:
+        print("Zip contents:", z.namelist())
+    
+    # Assuming 'src/main.py' is the entry point within the zip
+    # If the zip root is the 'src' dir content, then it is just 'main'
+    
+    # According to pyxel package behavior:
+    # "pyxel package src src/main.py" creates a zip where 'src' folder content is at root?
+    # No, usually it preserves the folder if not careful.
+    # Let's assume standard behavior: 'src' folder content is at root.
+    
+    import main
+    
+    # If main.py doesn't run automatically on import (it shouldn't if guarded by if __name__),
+    # we need to trigger it. But wait, main.py in this project usually starts things at the top level?
+    # Let's check main.py content from memory...
+    # It defines classes and then runs 'if __name__ == "__main__":' or similar?
+    # No, it constructs and runs directly in global scope in the original file I recall?
+    # Ah, I see "Runner(...)" call inside a block?
+    # Usually it's better to use run_path
+    
+    runpy.run_path("/src.pyxapp/src/main.py", run_name="__main__")
+    
+except Exception as e:
+    print(f"Error executing game: {e}")
+    import traceback
+    traceback.print_exc()
+`;
                 await pyodide.runPythonAsync(code);
 
             } catch (error) {
                 status.textContent = 'Error: ' + error.message;
                 console.error(error);
+                status.style.color = 'red';
             }
         }
         main();
