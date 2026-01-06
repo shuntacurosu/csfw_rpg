@@ -76,7 +76,7 @@ def load_item_sprites():
     # House Exterior (16x16) at (48, 48) -> Tile ID 51
     # (row 3, col 3) => 3*16 + 3 = 51
     base_x, base_y = 48, 48
-    img.rect(base_x, base_y, 16, 16, 3) # Fill with Path color (Pink/Brown)
+    img.rect(base_x, base_y, 16, 16, TRANSPARENT) # Fill with transparent (ground shows through)
     
     # Roof (Red/Brown)
     img.line(base_x+0, base_y+6, base_x+8, base_y+0, ROOF)

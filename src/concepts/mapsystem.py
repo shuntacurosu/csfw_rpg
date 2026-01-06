@@ -273,19 +273,36 @@ class MapSystem(Concept):
             return
             
         tiles = current_map["tiles"]
-        # Simple loop to draw tiles
+        
+        # Building tiles that should be drawn with transparency (on top of ground)
+        building_tiles = {7, 51}  # Village icon, House exterior
+        ground_base_tile = 0   # Default ground (Grass) to draw under buildings
+
+        # === PASS 1: Draw ground layer ===
+        # For building tiles, draw ground underneath first
         for y, row in enumerate(tiles):
             for x, tile in enumerate(row):
-                # 0 = Grass (0,0), 1 = Wall (16,0), 2 = Water (32,0), 3 = Path (48,0)
-                # Sprite sheet is 16x16 grid. 
-                # Convert ID to (u, v)
-                u = (tile % 16) * 16
-                v = (tile // 16) * 16
-                
-                # Check bounds inside sprite sheet (256 width) just in case
-                if u >= 256: u = 0
-                
-                pyxel.blt(x * 16, y * 16, 0, u, v, 16, 16)
+                if tile in building_tiles:
+                    # Draw ground underneath building
+                    u = (ground_base_tile % 16) * 16
+                    v = (ground_base_tile // 16) * 16
+                    pyxel.blt(x * 16, y * 16, 0, u, v, 16, 16)
+                else:
+                    # Normal tile
+                    u = (tile % 16) * 16
+                    v = (tile // 16) * 16
+                    if u >= 256: u = 0
+                    pyxel.blt(x * 16, y * 16, 0, u, v, 16, 16)
+
+        # === PASS 2: Draw buildings with transparency ===
+        for y, row in enumerate(tiles):
+            for x, tile in enumerate(row):
+                if tile in building_tiles:
+                    u = (tile % 16) * 16
+                    v = (tile // 16) * 16
+                    if u >= 256: u = 0
+                    # Draw with transparency (color 0 = transparent)
+                    pyxel.blt(x * 16, y * 16, 0, u, v, 16, 16, 0)
 
         # Draw Portals (Visual Indicators)
         portals = current_map.get("portals", [])

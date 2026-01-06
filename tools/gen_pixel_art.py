@@ -92,7 +92,8 @@ def create_pixel_art():
     rect(96+7, 2, 2, 3, 7) # Snowy cap
 
     # 7: Village Icon (112, 0) - For World Map
-    rect(112, 0, 16, 16, 11) # Grass bg
+    # Background is transparent (0) so ground shows through
+    rect(112, 0, 16, 16, 0) # Transparent bg
     rect(112+4, 4, 8, 8, 4) # House body
     rect(112+3, 3, 10, 2, 8) # Red roof
 
