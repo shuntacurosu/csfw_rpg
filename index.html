@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>CSFW RPG - Web Version</title>
+    <script src="https://cdn.jsdelivr.net/gh/kitao/pyxel/wasm/pyxel.js"></script>
+</head>
+
+<body class="pyxel-scheme">
+    <script>
+        launchPyxel({
+            root: "https://cdn.jsdelivr.net/gh/shuntacurosu/csfw_rpg@main",
+            command: "play",
+            name: "src.pyxapp",
+            packages: "pyyaml,cs-framework",
+            gamepad: "enabled"
+        });
+    </script>
+</body>
+
+</html>
