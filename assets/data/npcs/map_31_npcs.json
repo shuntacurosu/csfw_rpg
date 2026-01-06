@@ -1,0 +1,30 @@
+{
+    "npcs": [
+        {
+            "id": 101,
+            "map_id": 31,
+            "x": 64,
+            "y": 208,
+            "sprite_u": 48,
+            "sprite_v": 32,
+            "mobile": false,
+            "dialog": [
+                "This is the royal castle.",
+                "Welcome, traveler!"
+            ]
+        },
+        {
+            "id": 102,
+            "map_id": 31,
+            "x": 112,
+            "y": 208,
+            "sprite_u": 48,
+            "sprite_v": 32,
+            "mobile": false,
+            "dialog": [
+                "His Majesty is on the 2nd floor.",
+                "Please go ahead."
+            ]
+        }
+    ]
+}

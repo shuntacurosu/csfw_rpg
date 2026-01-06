@@ -428,8 +428,8 @@
             0,
             0,
             0,
-            0,
-            0,
+            8,
+            9,
             0,
             0,
             0,
@@ -4287,6 +4287,20 @@
             "target_map": 10,
             "target_x": 8,
             "target_y": 13
+        },
+        {
+            "x": 50,
+            "y": 5,
+            "target_map": 30,
+            "target_x": 18,
+            "target_y": 36
+        },
+        {
+            "x": 51,
+            "y": 5,
+            "target_map": 30,
+            "target_x": 19,
+            "target_y": 36
         }
     ],
     "encounter_rate": 0.1

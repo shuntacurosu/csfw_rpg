@@ -166,6 +166,31 @@ def create_main_sprites():
     rect(112+4, 4, 8, 8, 4)
     rect(112+3, 3, 10, 2, 8)
 
+    # Tile 8: Castle Icon Left (128,0) - Left half of 32x16 castle
+    rect(128, 0, 16, 16, 0)  # Transparent bg
+    # Castle wall left
+    rect(128+2, 6, 14, 10, 6)  # Stone wall
+    rectb(128+2, 6, 14, 10, 5)  # Wall outline
+    # Left tower
+    rect(128+2, 2, 6, 6, 6)
+    rectb(128+2, 2, 6, 6, 5)
+    # Tower top
+    rect(128+3, 0, 4, 3, 8)  # Red roof
+
+    # Tile 9: Castle Icon Right (144,0) - Right half of 32x16 castle
+    rect(144, 0, 16, 16, 0)  # Transparent bg
+    # Castle wall right
+    rect(144, 6, 14, 10, 6)  # Stone wall
+    rectb(144, 6, 14, 10, 5)  # Wall outline
+    # Right tower
+    rect(144+8, 2, 6, 6, 6)
+    rectb(144+8, 2, 6, 6, 5)
+    # Tower top
+    rect(144+9, 0, 4, 3, 8)  # Red roof
+    # Gate (center of castle - spans both tiles, right side has visible part)
+    rect(144, 10, 4, 6, 4)   # Brown door
+    rectb(144, 10, 4, 6, 1)  # Door outline
+
     # =====================================
     # ROW 1: Player - 4 Directions (y=16)
     # Down(0,16), Up(16,16), Left(32,16), Right(48,16)
@@ -405,6 +430,20 @@ def create_main_sprites():
     rect(112+5, 32+14, 2, 2, 0)
     rect(112+9, 32+14, 2, 2, 0)
 
+    # King (128,32); 王様 - Golden robe, crown
+    rect(128+4, 32+4, 8, 10, 10)  # Body (Yellow/Gold robe)
+    rect(128+5, 32+6, 6, 6, 9)    # Robe inner (Orange)
+    rect(128+5, 32+2, 6, 4, 15)   # Face
+    # Crown (Yellow with gems)
+    rect(128+4, 32+0, 8, 2, 10)   # Crown base
+    pixels[128+5, 32+0] = 8       # Red gem
+    pixels[128+7, 32+0] = 12      # Blue gem
+    pixels[128+10, 32+0] = 8      # Red gem
+    pixels[128+6, 32+4] = 0       # Left eye
+    pixels[128+9, 32+4] = 0       # Right eye
+    rect(128+5, 32+14, 2, 2, 0)   # Left foot
+    rect(128+9, 32+14, 2, 2, 0)   # Right foot
+
     # =====================================
     # ROW 3: Items & Objects (y=48)
     # =====================================
@@ -462,6 +501,62 @@ def create_main_sprites():
     rect(80+5, 48+6, 6, 8, 11)  # Green liquid
     rectb(80+5, 48+6, 6, 8, 1)
     pixels[80+6, 48+7] = 7  # Highlight
+
+    # =====================================
+    # ROW 4: 2x2 Castle Tiles (y=64)
+    # Tile IDs 64-67
+    # Forms a single castle when placed together:
+    # [64][65]
+    # [66][67]
+    # =====================================
+    print("Row 4: 2x2 Castle Tiles...")
+    
+    # Tile 64: Castle Top-Left (0,64)
+    rect(0, 64, 16, 16, 0)     # Clear
+    rect(0, 64+8, 16, 8, 6)    # Stone wall
+    rect(0, 64+2, 8, 8, 6)     # Left tower
+    rectb(0, 64+2, 8, 8, 5)
+    rect(2, 64, 4, 4, 8)       # Tower top (Red)
+    pixels[3, 64+1] = 10       # Flag
+    
+    # Tile 65: Castle Top-Right (16,64)
+    rect(16, 64, 16, 16, 0)    # Clear
+    rect(16, 64+8, 16, 8, 6)   # Stone wall
+    rect(16+8, 64+2, 8, 8, 6)  # Right tower
+    rectb(16+8, 64+2, 8, 8, 5)
+    rect(16+10, 64, 4, 4, 8)   # Tower top (Red)
+    pixels[16+11, 64+1] = 10   # Flag
+    
+    # Tile 66: Castle Bottom-Left (32,64)
+    rect(32, 64, 16, 16, 0)    # Clear
+    rect(32, 64, 16, 16, 6)    # Stone wall
+    rectb(32, 64, 16, 16, 5)
+    rect(32+12, 64+8, 4, 8, 4) # Left side of gate (Brown)
+    
+    # Tile 67: Castle Bottom-Right (48,64)
+    rect(48, 64, 16, 16, 0)    # Clear
+    rect(48, 64, 16, 16, 6)    # Stone wall
+    rectb(48, 64, 16, 16, 5)
+    rect(48, 64+8, 4, 8, 4)    # Right side of gate (Brown)
+    rect(48, 64+6, 4, 2, 1)    # Dark archway top
+
+    # Tile 68: Stairs Up (64,64)
+    rect(64, 64, 16, 16, 0)    # Transparent background
+    # Draw stone stairs going up
+    rect(64+2, 64+12, 12, 3, 6)   # Bottom step
+    rect(64+3, 64+9, 10, 3, 6)    # Middle step
+    rect(64+4, 64+6, 8, 3, 6)     # Top step
+    rect(64+5, 64+3, 6, 3, 6)     # Highest step
+    # Outlines
+    rectb(64+2, 64+12, 12, 3, 5)
+    rectb(64+3, 64+9, 10, 3, 5)
+    rectb(64+4, 64+6, 8, 3, 5)
+    rectb(64+5, 64+3, 6, 3, 5)
+    # Arrow indicator
+    pixels[64+7, 64+1] = 10
+    pixels[64+8, 64+1] = 10
+    pixels[64+7, 64+2] = 10
+    pixels[64+8, 64+2] = 10
 
     print(f"Saved: assets/images/sprites.png")
     return img

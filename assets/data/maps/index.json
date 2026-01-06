@@ -34,6 +34,21 @@
             "id": 20,
             "name": "Village House",
             "file": "village_house.json"
+        },
+        {
+            "id": 30,
+            "name": "Castle Town",
+            "file": "castle/castle_town.json"
+        },
+        {
+            "id": 31,
+            "name": "Castle 1F",
+            "file": "castle/castle_1f.json"
+        },
+        {
+            "id": 32,
+            "name": "Castle 2F",
+            "file": "castle/castle_2f.json"
         }
     ]
 }

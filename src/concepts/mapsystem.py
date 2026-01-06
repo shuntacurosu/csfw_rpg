@@ -165,7 +165,13 @@ class MapSystem(Concept):
         
         if not is_valid: return
 
-        tiles = current_map["tiles"]
+        # Support layer-based maps (layers.objects) or legacy (tiles)
+        layers = current_map.get("layers")
+        if layers:
+            object_tiles = layers.get("objects", [])
+        else:
+            object_tiles = current_map.get("tiles", [])
+        
         map_w = current_map.get("width", 16)
         map_h = current_map.get("height", 16)
         
@@ -176,12 +182,14 @@ class MapSystem(Concept):
             if tx < 0 or tx >= map_w or ty < 0 or ty >= map_h:
                 is_valid = False
                 break
-                
-            tile_id = tiles[ty][tx]
             
-            # Walkable check (Adjusted for World Map tiles)
-            # 0=Grass, 3=Path, 4=Forest, 5=Desert, 7=Village -> Walkable
-            # 1=Wall, 2=Water, 6=Mountain -> Block
+            # Check collision in object layer (or tiles for legacy)
+            if ty < len(object_tiles) and tx < len(object_tiles[ty]):
+                tile_id = object_tiles[ty][tx]
+            else:
+                tile_id = 0
+            
+            # Walkable check: Block on wall(1), water(2), mountain(6)
             if tile_id in [1, 2, 6]: 
                 is_valid = False
                 break
@@ -291,41 +299,32 @@ class MapSystem(Concept):
         current_map = self.map_data.get(self.current_map_id)
         if not current_map:
             return
-            
-        tiles = current_map["tiles"]
+        
+        # Support layer-based maps or legacy single-layer
+        layers = current_map.get("layers")
+        if layers:
+            ground_tiles = layers.get("ground", [])
+            object_tiles = layers.get("objects", [])
+        else:
+            # Legacy: tiles acts as both ground and objects
+            ground_tiles = current_map.get("tiles", [])
+            object_tiles = current_map.get("tiles", [])
         
         # Layer definitions matching gen_pixel_art.py
-        LAYER1_TILES = {0, 3, 4, 5}      # Ground: grass, path, forest, desert
-        LAYER2_TILES = {1, 2, 6, 7, 51}  # Buildings: wall, water, mountain, village, dungeon
-        
-        # Default ground tile for under buildings
-        ground_base_tile = 0  # Grass
+        LAYER2_TILES = {1, 2, 6, 7, 8, 9, 51, 64, 65, 66, 67, 68}  # Buildings, castle, stairs
 
         # === LAYER 1: Draw ground tiles ===
-        for y, row in enumerate(tiles):
+        for y, row in enumerate(ground_tiles):
             for x, tile in enumerate(row):
-                if tile in LAYER1_TILES:
-                    # Ground tiles - draw directly
-                    u = (tile % 16) * 16
-                    v = (tile // 16) * 16
-                    if u >= 256: u = 0
-                    pyxel.blt(x * 16, y * 16, 0, u, v, 16, 16)
-                elif tile in LAYER2_TILES:
-                    # For Layer2 tiles, first draw ground underneath
-                    u = (ground_base_tile % 16) * 16
-                    v = (ground_base_tile // 16) * 16
-                    pyxel.blt(x * 16, y * 16, 0, u, v, 16, 16)
-                else:
-                    # Unknown tile - treat as ground
-                    u = (tile % 16) * 16
-                    v = (tile // 16) * 16
-                    if u >= 256: u = 0
-                    pyxel.blt(x * 16, y * 16, 0, u, v, 16, 16)
+                u = (tile % 16) * 16
+                v = (tile // 16) * 16
+                if u >= 256: u = 0
+                pyxel.blt(x * 16, y * 16, 0, u, v, 16, 16)
 
-        # === LAYER 2: Draw buildings/obstacles with transparency ===
-        for y, row in enumerate(tiles):
+        # === LAYER 2: Draw objects with transparency ===
+        for y, row in enumerate(object_tiles):
             for x, tile in enumerate(row):
-                if tile in LAYER2_TILES:
+                if tile != 0 and tile in LAYER2_TILES:
                     u = (tile % 16) * 16
                     v = (tile // 16) * 16
                     if u >= 256: u = 0

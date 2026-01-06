@@ -1,0 +1,19 @@
+{
+    "npcs": [
+        {
+            "id": 103,
+            "map_id": 32,
+            "x": 80,
+            "y": 32,
+            "sprite_u": 128,
+            "sprite_v": 32,
+            "mobile": false,
+            "dialog": [
+                "Welcome, brave hero!",
+                "I am the King of this land.",
+                "Please defeat the Demon Lord!",
+                "I'm counting on you!"
+            ]
+        }
+    ]
+}

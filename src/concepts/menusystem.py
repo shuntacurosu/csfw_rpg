@@ -54,15 +54,11 @@ class MenuSystem(Concept):
         import json
         import os
         try:
-            # Assuming execution from root
-            path = "assets/data/maps.json" 
+            # Load from split JSON structure
+            path = "assets/data/maps/world_map.json" 
             if os.path.exists(path):
                 with open(path, 'r') as f:
-                    data = json.load(f)
-                    for m in data.get("maps", []):
-                        if m["id"] == 1:
-                            self.world_map = m
-                            break
+                    self.world_map = json.load(f)
             print(f"World Map Loaded: {self.world_map is not None}")
         except Exception as e:
             print(f"Failed to load world map: {e}")
@@ -239,7 +235,7 @@ class MenuSystem(Concept):
             
             if self.world_map:
                 tiles = self.world_map.get("tiles", [])
-                cols = {0: 11, 1: 5, 2: 12, 3: 4, 4: 3, 5: 10, 6: 13, 7: 9}
+                cols = {0: 11, 1: 5, 2: 12, 3: 4, 4: 3, 5: 10, 6: 13, 7: 9, 8: 8, 9: 8}
                 for ty, row in enumerate(tiles):
                     for tx, tile in enumerate(row):
                         col = cols.get(tile, 0)

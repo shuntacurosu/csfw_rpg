@@ -15,6 +15,14 @@
         {
             "map_id": 20,
             "file": "map_20_npcs.json"
+        },
+        {
+            "map_id": 31,
+            "file": "map_31_npcs.json"
+        },
+        {
+            "map_id": 32,
+            "file": "map_32_npcs.json"
         }
     ]
 }
