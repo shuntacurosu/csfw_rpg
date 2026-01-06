@@ -23,6 +23,10 @@
                 status.textContent = 'Loading Pyodide...';
                 const pyodide = await loadPyodide();
 
+                // Set canvas for Pyxel (SDL2/WebGL)
+                const canvas = document.getElementById("canvas");
+                pyodide.canvas.setCanvas3D(canvas);
+
                 // Install packages via micropip
                 status.textContent = 'Installing packages...';
                 await pyodide.loadPackage('micropip');
