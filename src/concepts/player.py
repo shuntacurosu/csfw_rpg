@@ -81,6 +81,7 @@ class Player(Concept):
         self.target_y = self.y
         self.is_moving = False
         self.speed = 2
+        self.direction = "down"  # "down", "up", "left", "right"
         
         # Stats
         self.name = "Hero"
@@ -240,6 +241,16 @@ class Player(Concept):
         dx = payload.get("dx", 0)
         dy = payload.get("dy", 0)
         
+        # Update facing direction
+        if dy > 0:
+            self.direction = "down"
+        elif dy < 0:
+            self.direction = "up"
+        elif dx < 0:
+            self.direction = "left"
+        elif dx > 0:
+            self.direction = "right"
+        
         # Calculate target based on speed
         target_x = self.x + dx * 2
         target_y = self.y + dy * 2
@@ -269,12 +280,22 @@ class Player(Concept):
     def draw(self, payload: dict):
         """
         Action: draw
+        Uses 4-directional sprites based on self.direction.
+        Sprite positions: Down(0,16), Up(16,16), Left(32,16), Right(48,16)
         """
-        # print("Player.draw called")
         import pyxel
-        # Draw player from sprite sheet
-        # Hero is at (0, 16) in sprite sheet (row 2 col 1)
-        pyxel.blt(self.x, self.y, 0, 0, 16, 16, 16, 0) # 0 is transparent color (black)
+        
+        # Sprite U position based on direction
+        direction_sprites = {
+            "down": 0,
+            "up": 16,
+            "left": 32,
+            "right": 48
+        }
+        sprite_u = direction_sprites.get(self.direction, 0)
+        
+        # Draw player with transparency (color 0)
+        pyxel.blt(self.x, self.y, 0, sprite_u, 16, 16, 16, 0)
 
     def get_state_snapshot(self) -> Dict[str, Any]:
         return {

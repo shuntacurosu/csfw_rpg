@@ -167,18 +167,161 @@ def create_main_sprites():
     rect(112+3, 3, 10, 2, 8)
 
     # =====================================
-    # ROW 1: Player (y=16)
+    # ROW 1: Player - 4 Directions (y=16)
+    # Down(0,16), Up(16,16), Left(32,16), Right(48,16)
     # =====================================
-    print("Row 1: Player...")
+    print("Row 1: Player (4 directions)...")
     
-    # Hero (0,16)
-    rect(4, 16+4, 8, 10, 8)
-    rect(5, 16+2, 6, 4, 15)
-    rect(5, 16+2, 6, 2, 4)
-    pixels[6, 16+4] = 0
-    pixels[9, 16+4] = 0
-    rect(5, 16+14, 2, 2, 0)
-    rect(9, 16+14, 2, 2, 0)
+    def draw_hero(base_x, base_y, direction):
+        """Draw hero sprite facing given direction."""
+        # Clear area
+        rect(base_x, base_y, 16, 16, 0)
+        
+        if direction == "down":
+            # Facing down (front view)
+            # Cape (behind - Red)
+            pixels[base_x+3, base_y+6] = 8
+            pixels[base_x+2, base_y+7] = 8
+            pixels[base_x+3, base_y+8] = 8
+            pixels[base_x+12, base_y+6] = 8
+            pixels[base_x+13, base_y+7] = 8
+            pixels[base_x+12, base_y+8] = 8
+            
+            # Body (Blue armor)
+            rect(base_x+5, base_y+6, 6, 7, 1)
+            rect(base_x+6, base_y+7, 4, 5, 12)
+            
+            # Belt
+            rect(base_x+5, base_y+10, 6, 1, 4)
+            pixels[base_x+7, base_y+10] = 10
+            pixels[base_x+8, base_y+10] = 10
+            
+            # Head
+            rect(base_x+5, base_y+2, 6, 5, 15)
+            
+            # Hair
+            rect(base_x+5, base_y+1, 6, 2, 4)
+            pixels[base_x+4, base_y+2] = 4
+            pixels[base_x+11, base_y+2] = 4
+            
+            # Eyes
+            pixels[base_x+6, base_y+4] = 0
+            pixels[base_x+9, base_y+4] = 0
+            
+            # Legs
+            rect(base_x+5, base_y+13, 2, 2, 1)
+            rect(base_x+9, base_y+13, 2, 2, 1)
+            pixels[base_x+5, base_y+14] = 4
+            pixels[base_x+6, base_y+14] = 4
+            pixels[base_x+9, base_y+14] = 4
+            pixels[base_x+10, base_y+14] = 4
+            
+        elif direction == "up":
+            # Facing up (back view)
+            # Cape (visible from back - Red)
+            rect(base_x+4, base_y+5, 8, 8, 8)
+            
+            # Body (Blue armor)
+            rect(base_x+5, base_y+6, 6, 7, 1)
+            
+            # Head (back of hair)
+            rect(base_x+5, base_y+1, 6, 5, 4)
+            
+            # Legs
+            rect(base_x+5, base_y+13, 2, 2, 1)
+            rect(base_x+9, base_y+13, 2, 2, 1)
+            pixels[base_x+5, base_y+14] = 4
+            pixels[base_x+6, base_y+14] = 4
+            pixels[base_x+9, base_y+14] = 4
+            pixels[base_x+10, base_y+14] = 4
+            
+        elif direction == "left":
+            # Facing left (side view)
+            # Cape (flowing right - Red)
+            pixels[base_x+10, base_y+6] = 8
+            pixels[base_x+11, base_y+7] = 8
+            pixels[base_x+12, base_y+8] = 8
+            pixels[base_x+11, base_y+9] = 8
+            pixels[base_x+12, base_y+10] = 8
+            pixels[base_x+11, base_y+11] = 8
+            pixels[base_x+12, base_y+12] = 8
+            
+            # Body
+            rect(base_x+5, base_y+6, 5, 7, 1)
+            rect(base_x+5, base_y+7, 3, 5, 12)
+            
+            # Belt
+            rect(base_x+5, base_y+10, 5, 1, 4)
+            
+            # Head (side)
+            rect(base_x+4, base_y+2, 5, 5, 15)
+            
+            # Hair
+            rect(base_x+4, base_y+1, 5, 2, 4)
+            pixels[base_x+8, base_y+2] = 4
+            pixels[base_x+8, base_y+3] = 4
+            
+            # Eye
+            pixels[base_x+4, base_y+4] = 0
+            
+            # Sword (left hand forward)
+            pixels[base_x+2, base_y+6] = 7
+            pixels[base_x+1, base_y+7] = 7
+            pixels[base_x+2, base_y+8] = 10
+            pixels[base_x+3, base_y+9] = 4
+            
+            # Legs
+            rect(base_x+5, base_y+13, 2, 2, 1)
+            rect(base_x+7, base_y+13, 2, 2, 1)
+            pixels[base_x+5, base_y+14] = 4
+            pixels[base_x+8, base_y+14] = 4
+            
+        elif direction == "right":
+            # Facing right (side view - mirror of left)
+            # Cape (flowing left - Red)
+            pixels[base_x+5, base_y+6] = 8
+            pixels[base_x+4, base_y+7] = 8
+            pixels[base_x+3, base_y+8] = 8
+            pixels[base_x+4, base_y+9] = 8
+            pixels[base_x+3, base_y+10] = 8
+            pixels[base_x+4, base_y+11] = 8
+            pixels[base_x+3, base_y+12] = 8
+            
+            # Body
+            rect(base_x+6, base_y+6, 5, 7, 1)
+            rect(base_x+8, base_y+7, 3, 5, 12)
+            
+            # Belt
+            rect(base_x+6, base_y+10, 5, 1, 4)
+            
+            # Head (side)
+            rect(base_x+7, base_y+2, 5, 5, 15)
+            
+            # Hair
+            rect(base_x+7, base_y+1, 5, 2, 4)
+            pixels[base_x+7, base_y+2] = 4
+            pixels[base_x+7, base_y+3] = 4
+            
+            # Eye
+            pixels[base_x+11, base_y+4] = 0
+            
+            # Sword (right hand forward)
+            pixels[base_x+13, base_y+6] = 7
+            pixels[base_x+14, base_y+7] = 7
+            pixels[base_x+13, base_y+8] = 10
+            pixels[base_x+12, base_y+9] = 4
+            
+            # Legs
+            rect(base_x+7, base_y+13, 2, 2, 1)
+            rect(base_x+9, base_y+13, 2, 2, 1)
+            pixels[base_x+7, base_y+14] = 4
+            pixels[base_x+10, base_y+14] = 4
+    
+    # Generate 4 directions
+    draw_hero(0, 16, "down")   # (0, 16) - Default/Down
+    draw_hero(16, 16, "up")    # (16, 16) - Up
+    draw_hero(32, 16, "left")  # (32, 16) - Left
+    draw_hero(48, 16, "right") # (48, 16) - Right
 
     # =====================================
     # ROW 2: NPCs (y=32)
