@@ -3,7 +3,13 @@ import os
 import yaml # Need to install pyyaml if not present, but usually std env has it? No, need to check.
 
 # Ensure src is in path
-sys.path.append(os.path.join(os.path.dirname(__file__), "src"))
+# Ensure src is in path
+try:
+    project_root = os.path.dirname(__file__)
+except NameError:
+    project_root = "."
+
+sys.path.append(os.path.join(project_root, "src"))
 
 from concepts.gameloop import GameLoop
 from concepts.inputsystem import InputSystem
