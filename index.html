@@ -95,9 +95,14 @@ except Exception as e:
                 await pyodide.runPythonAsync(code);
 
             } catch (error) {
+                if (error.message === 'unwind') {
+                    console.log('Pyxel main loop started (unwind caught)');
+                    return;
+                }
                 status.textContent = 'Error: ' + error.message;
                 console.error(error);
                 status.style.color = 'red';
+                document.getElementById('loading').style.display = 'block';
             }
         }
         main();
