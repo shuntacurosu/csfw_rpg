@@ -54,7 +54,7 @@ class BattleSystem(Concept):
         """Action: load"""
         import os
         import json
-        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+        base_dir = os.path.dirname(os.path.dirname(__file__))
         enemy_file = os.path.join(base_dir, "assets/data/enemies.json")
         if os.path.exists(enemy_file):
             with open(enemy_file, 'r') as f:

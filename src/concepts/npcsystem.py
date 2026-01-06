@@ -67,7 +67,7 @@ class NpcSystem(Concept):
         if current_map_id is None:
             current_map_id = 0
         
-        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+        base_dir = os.path.dirname(os.path.dirname(__file__))
         
         # Load from split JSON structure
         npcs_dir = os.path.join(base_dir, "assets", "data", "npcs")

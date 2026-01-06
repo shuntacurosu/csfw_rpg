@@ -9,7 +9,7 @@ try:
 except NameError:
     project_root = "."
 
-sys.path.append(os.path.join(project_root, "src"))
+sys.path.append(project_root)
 
 from concepts.gameloop import GameLoop
 from concepts.inputsystem import InputSystem

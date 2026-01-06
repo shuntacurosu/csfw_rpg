@@ -55,7 +55,9 @@ class MenuSystem(Concept):
         import os
         try:
             # Load from split JSON structure
-            path = "assets/data/maps/world_map.json" 
+            # Load from split JSON structure
+            base_dir = os.path.dirname(os.path.dirname(__file__))
+            path = os.path.join(base_dir, "assets", "data", "maps", "world_map.json") 
             if os.path.exists(path):
                 with open(path, 'r') as f:
                     self.world_map = json.load(f)

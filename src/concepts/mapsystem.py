@@ -72,7 +72,7 @@ class MapSystem(Concept):
              return
 
         print(f"MapSystem.load called with {payload}")
-        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+        base_dir = os.path.dirname(os.path.dirname(__file__))
         
         # Load from split JSON structure
         maps_dir = os.path.join(base_dir, "assets", "data", "maps")

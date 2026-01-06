@@ -36,7 +36,7 @@ class GameLoop(Concept):
         pyxel.init(256, 256, title="CSFW RPG", fps=60)
         
         # Load resources
-        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+        base_dir = os.path.dirname(os.path.dirname(__file__))
         
         # Load main sprites (Bank 0)
         sprites_path = os.path.join(base_dir, "assets", "images", "sprites.png").replace("\\", "/")
