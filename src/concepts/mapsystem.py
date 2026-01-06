@@ -42,6 +42,7 @@ class MapSystem(Concept):
     def load(self, payload: dict):
         """
         Action: load
+        Supports both new split JSON structure (assets/data/maps/) and legacy single file.
         """
         import os
         import json
@@ -71,22 +72,48 @@ class MapSystem(Concept):
              return
 
         print(f"MapSystem.load called with {payload}")
-        map_file = payload.get("map_file", "assets/data/maps.json")
-        
         base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-        full_path = os.path.join(base_dir, map_file)
-
-        if os.path.exists(full_path):
-             with open(full_path, 'r') as f:
-                 data = json.load(f)
-                 self.map_data = {m["id"]: m for m in data.get("maps", [])}
-                 # Initial load emit
-                 w, h = get_map_dims(self.current_map_id)
-                 map_name = get_map_name(self.current_map_id)
-                 print(f"Map {self.current_map_id} loaded. Name: {map_name} Size: {w}x{h}")
-                 self.emit("MapLoaded", {"map_id": self.current_map_id, "width": w, "height": h, "map_name": map_name})
+        
+        # Try new split structure first
+        maps_dir = os.path.join(base_dir, "assets", "data", "maps")
+        index_path = os.path.join(maps_dir, "index.json")
+        
+        if os.path.exists(index_path):
+            # New structure: load from individual files
+            print("Loading maps from split JSON structure...")
+            with open(index_path, 'r', encoding='utf-8') as f:
+                index = json.load(f)
+            
+            self.map_data = {}
+            for entry in index.get("maps", []):
+                map_file_path = os.path.join(maps_dir, entry["file"])
+                if os.path.exists(map_file_path):
+                    with open(map_file_path, 'r', encoding='utf-8') as f:
+                        map_data = json.load(f)
+                        self.map_data[entry["id"]] = map_data
+                        print(f"  Loaded: {entry['name']} (id={entry['id']})")
+            
+            # Initial load emit
+            w, h = get_map_dims(self.current_map_id)
+            map_name = get_map_name(self.current_map_id)
+            print(f"Map {self.current_map_id} loaded. Name: {map_name} Size: {w}x{h}")
+            self.emit("MapLoaded", {"map_id": self.current_map_id, "width": w, "height": h, "map_name": map_name})
         else:
-             print(f"Map file not found: {full_path}")
+            # Fallback: Legacy single file
+            map_file = payload.get("map_file", "assets/data/maps.json")
+            full_path = os.path.join(base_dir, map_file)
+
+            if os.path.exists(full_path):
+                 with open(full_path, 'r', encoding='utf-8') as f:
+                     data = json.load(f)
+                     self.map_data = {m["id"]: m for m in data.get("maps", [])}
+                     # Initial load emit
+                     w, h = get_map_dims(self.current_map_id)
+                     map_name = get_map_name(self.current_map_id)
+                     print(f"Map {self.current_map_id} loaded. Name: {map_name} Size: {w}x{h}")
+                     self.emit("MapLoaded", {"map_id": self.current_map_id, "width": w, "height": h, "map_name": map_name})
+            else:
+                 print(f"Map file not found: {full_path}")
 
     def validate_move(self, payload: dict):
         """
@@ -266,6 +293,13 @@ class MapSystem(Concept):
     def draw(self, payload: dict):
         """
         Action: draw
+        
+        Layered rendering system:
+        - Layer 1: Ground tiles (grass, path, forest, desert) - NO transparency
+        - Layer 2: Buildings/obstacles (wall, water, mountain, icons) - WITH transparency
+        - Layer 3: Effects (reserved for future)
+        
+        Characters (Player, NPCs) are drawn by their respective Concepts after this.
         """
         import pyxel
         current_map = self.map_data.get(self.current_map_id)
@@ -274,37 +308,45 @@ class MapSystem(Concept):
             
         tiles = current_map["tiles"]
         
-        # Building tiles that should be drawn with transparency (on top of ground)
-        building_tiles = {7, 51}  # Village icon, House exterior
-        ground_base_tile = 0   # Default ground (Grass) to draw under buildings
+        # Layer definitions matching gen_pixel_art.py
+        LAYER1_TILES = {0, 3, 4, 5}      # Ground: grass, path, forest, desert
+        LAYER2_TILES = {1, 2, 6, 7, 51}  # Buildings: wall, water, mountain, village, dungeon
+        
+        # Default ground tile for under buildings
+        ground_base_tile = 0  # Grass
 
-        # === PASS 1: Draw ground layer ===
-        # For building tiles, draw ground underneath first
+        # === LAYER 1: Draw ground tiles ===
         for y, row in enumerate(tiles):
             for x, tile in enumerate(row):
-                if tile in building_tiles:
-                    # Draw ground underneath building
+                if tile in LAYER1_TILES:
+                    # Ground tiles - draw directly
+                    u = (tile % 16) * 16
+                    v = (tile // 16) * 16
+                    if u >= 256: u = 0
+                    pyxel.blt(x * 16, y * 16, 0, u, v, 16, 16)
+                elif tile in LAYER2_TILES:
+                    # For Layer2 tiles, first draw ground underneath
                     u = (ground_base_tile % 16) * 16
                     v = (ground_base_tile // 16) * 16
                     pyxel.blt(x * 16, y * 16, 0, u, v, 16, 16)
                 else:
-                    # Normal tile
+                    # Unknown tile - treat as ground
                     u = (tile % 16) * 16
                     v = (tile // 16) * 16
                     if u >= 256: u = 0
                     pyxel.blt(x * 16, y * 16, 0, u, v, 16, 16)
 
-        # === PASS 2: Draw buildings with transparency ===
+        # === LAYER 2: Draw buildings/obstacles with transparency ===
         for y, row in enumerate(tiles):
             for x, tile in enumerate(row):
-                if tile in building_tiles:
+                if tile in LAYER2_TILES:
                     u = (tile % 16) * 16
                     v = (tile // 16) * 16
                     if u >= 256: u = 0
                     # Draw with transparency (color 0 = transparent)
                     pyxel.blt(x * 16, y * 16, 0, u, v, 16, 16, 0)
 
-        # Draw Portals (Visual Indicators)
+        # === LAYER 2 (cont): Draw Portals as visual indicators ===
         portals = current_map.get("portals", [])
         for portal in portals:
             tx = portal.get("x")
@@ -317,13 +359,15 @@ class MapSystem(Concept):
             # Dungeon Entrance (To Map 10, 11, 12)
             if target_map in [10, 11, 12]:
                 # Draw Cave Entrance
-                pyxel.rect(x + 3, y + 3, 10, 10, 0) # Black hole
-                pyxel.rectb(x + 2, y + 2, 12, 12, 4) # Frame
+                pyxel.rect(x + 3, y + 3, 10, 10, 0)  # Black hole
+                pyxel.rectb(x + 2, y + 2, 12, 12, 4)  # Frame
                 
             # Exit to World (To Map 1) from Dungeon (Map 10-12)
             elif target_map == 1 and self.current_map_id in [10, 11, 12]:
                 # Draw Stairs Up
-                pyxel.rect(x + 3, y + 3, 10, 10, 13) # Gray base
-                pyxel.rect(x + 5, y + 5, 6, 6, 7)  # White steps
+                pyxel.rect(x + 3, y + 3, 10, 10, 13)  # Gray base
+                pyxel.rect(x + 5, y + 5, 6, 6, 7)    # White steps
 
-
+        # === LAYER 3: Effects (reserved for future) ===
+        # Effects like particles, magic, etc. will be drawn here
+        pass

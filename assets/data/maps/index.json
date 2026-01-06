@@ -1,0 +1,39 @@
+{
+    "maps": [
+        {
+            "id": 0,
+            "name": "Village",
+            "file": "village.json"
+        },
+        {
+            "id": 1,
+            "name": "World Map",
+            "file": "world_map.json"
+        },
+        {
+            "id": 2,
+            "name": "Village B",
+            "file": "village_b.json"
+        },
+        {
+            "id": 10,
+            "name": "Cave B1",
+            "file": "cave_b1.json"
+        },
+        {
+            "id": 11,
+            "name": "Cave B2",
+            "file": "cave_b2.json"
+        },
+        {
+            "id": 12,
+            "name": "Cave B3",
+            "file": "cave_b3.json"
+        },
+        {
+            "id": 20,
+            "name": "Village House",
+            "file": "village_house.json"
+        }
+    ]
+}

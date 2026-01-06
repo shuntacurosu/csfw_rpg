@@ -1,0 +1,20 @@
+{
+    "npc_files": [
+        {
+            "map_id": 0,
+            "file": "map_0_npcs.json"
+        },
+        {
+            "map_id": 2,
+            "file": "map_2_npcs.json"
+        },
+        {
+            "map_id": 12,
+            "file": "map_12_npcs.json"
+        },
+        {
+            "map_id": 20,
+            "file": "map_20_npcs.json"
+        }
+    ]
+}

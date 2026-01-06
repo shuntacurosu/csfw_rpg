@@ -1,0 +1,52 @@
+{
+    "npcs": [
+        {
+            "id": 21,
+            "map_id": 20,
+            "x": 48,
+            "y": 48,
+            "sprite_u": 0,
+            "sprite_v": 48,
+            "mobile": false,
+            "is_chest": true,
+            "item_reward": {
+                "name": "Potion",
+                "type": "item",
+                "hp_bonus": 10,
+                "price": 50
+            }
+        },
+        {
+            "id": 22,
+            "map_id": 20,
+            "x": 80,
+            "y": 48,
+            "sprite_u": 0,
+            "sprite_v": 48,
+            "mobile": false,
+            "is_chest": true,
+            "item_reward": {
+                "name": "Iron Shield",
+                "type": "shield",
+                "def_bonus": 5,
+                "price": 100
+            }
+        },
+        {
+            "id": 23,
+            "map_id": 20,
+            "x": 112,
+            "y": 48,
+            "sprite_u": 0,
+            "sprite_v": 48,
+            "mobile": false,
+            "is_chest": true,
+            "item_reward": {
+                "name": "Magic Ring",
+                "type": "accessory",
+                "spd_bonus": 5,
+                "price": 200
+            }
+        }
+    ]
+}
