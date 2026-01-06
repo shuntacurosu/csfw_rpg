@@ -165,12 +165,9 @@ class MapSystem(Concept):
         
         if not is_valid: return
 
-        # Support layer-based maps (layers.objects) or legacy (tiles)
-        layers = current_map.get("layers")
-        if layers:
-            object_tiles = layers.get("objects", [])
-        else:
-            object_tiles = current_map.get("tiles", [])
+        # Layer-based maps only
+        layers = current_map.get("layers", {})
+        object_tiles = layers.get("objects", [])
         
         map_w = current_map.get("width", 16)
         map_h = current_map.get("height", 16)
@@ -300,15 +297,10 @@ class MapSystem(Concept):
         if not current_map:
             return
         
-        # Support layer-based maps or legacy single-layer
-        layers = current_map.get("layers")
-        if layers:
-            ground_tiles = layers.get("ground", [])
-            object_tiles = layers.get("objects", [])
-        else:
-            # Legacy: tiles acts as both ground and objects
-            ground_tiles = current_map.get("tiles", [])
-            object_tiles = current_map.get("tiles", [])
+        # Layer-based maps only (no legacy support)
+        layers = current_map.get("layers", {})
+        ground_tiles = layers.get("ground", [])
+        object_tiles = layers.get("objects", [])
         
         # Layer definitions matching gen_pixel_art.py
         LAYER2_TILES = {1, 2, 6, 7, 8, 9, 51, 64, 65, 66, 67, 68}  # Buildings, castle, stairs
