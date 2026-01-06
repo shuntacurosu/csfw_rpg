@@ -6,8 +6,7 @@ synchronizations:
     then:
       - target: MapSystem
         action: load
-        payload:
-          map_file: "assets/data/maps.json"
+        payload: {}
       - target: Player
         action: load
       - target: BattleSystem
@@ -17,7 +16,7 @@ synchronizations:
         payload:
           state: "EXPLORING"
       - target: NpcSystem
-        action: load # Load NPCs on init
+        action: load
         payload: {}
 
   - name: GameLoopUpdate

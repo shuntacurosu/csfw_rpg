@@ -57,7 +57,7 @@ class NpcSystem(Concept):
     def load(self, payload: dict):
         """
         Action: load
-        Supports both new split JSON structure (assets/data/npcs/) and legacy single file.
+        Loads NPCs from split JSON structure (assets/data/npcs/).
         """
         import os
         import json
@@ -69,29 +69,19 @@ class NpcSystem(Concept):
         
         base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
         
-        # Try new split structure first
+        # Load from split JSON structure
         npcs_dir = os.path.join(base_dir, "assets", "data", "npcs")
         npc_file_path = os.path.join(npcs_dir, f"map_{current_map_id}_npcs.json")
         
         if os.path.exists(npc_file_path):
-            # New structure: load from map-specific file
             with open(npc_file_path, 'r', encoding='utf-8') as f:
                 data = json.load(f)
                 map_npcs = data.get("npcs", [])
-            print(f"Loaded {len(map_npcs)} NPCs from split file for map {current_map_id}")
+            print(f"Loaded {len(map_npcs)} NPCs for map {current_map_id}")
         else:
-            # Fallback: Legacy single file
-            if not self.npcs:
-                legacy_path = os.path.join(base_dir, "assets", "data", "npcs.json")
-                
-                if os.path.exists(legacy_path):
-                    with open(legacy_path, 'r', encoding='utf-8') as f:
-                        data = json.load(f)
-                        self.npcs = data.get("npcs", [])
-                        print(f"Loaded {len(self.npcs)} total NPCs from legacy file")
-            
-            map_npcs = [npc for npc in self.npcs if npc.get("map_id") == current_map_id]
-            print(f"Filtered {len(map_npcs)} NPCs for map {current_map_id}")
+            # No NPCs for this map
+            map_npcs = []
+            print(f"No NPC file found for map {current_map_id}")
         
         self.active_npcs = [npc.copy() for npc in map_npcs]
         # Store original positions for mobile NPCs

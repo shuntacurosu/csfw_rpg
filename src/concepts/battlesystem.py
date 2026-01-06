@@ -80,18 +80,8 @@ class BattleSystem(Concept):
         self.target_cursor = 0
         self.target_cursor = 0
         
-        if not self.resources_loaded:
-            try:
-                try:
-                    from src.concepts.enemy_assets import load_enemy_assets
-                except ImportError:
-                    from concepts.enemy_assets import load_enemy_assets
-                    
-                load_enemy_assets()
-                self.resources_loaded = True
-                print("[BattleSystem] Loaded enemy sprites via script")
-            except Exception as e:
-                print(f"[BattleSystem] Failed to load enemy sprites: {e}")
+        # Sprites are pre-loaded from enemies.png in gameloop.py
+        # No runtime generation needed
         
         for name in enemy_names:
             template = self.enemy_templates.get(name)

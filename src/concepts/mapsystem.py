@@ -42,7 +42,7 @@ class MapSystem(Concept):
     def load(self, payload: dict):
         """
         Action: load
-        Supports both new split JSON structure (assets/data/maps/) and legacy single file.
+        Loads maps from split JSON structure (assets/data/maps/).
         """
         import os
         import json
@@ -74,46 +74,32 @@ class MapSystem(Concept):
         print(f"MapSystem.load called with {payload}")
         base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
         
-        # Try new split structure first
+        # Load from split JSON structure
         maps_dir = os.path.join(base_dir, "assets", "data", "maps")
         index_path = os.path.join(maps_dir, "index.json")
         
-        if os.path.exists(index_path):
-            # New structure: load from individual files
-            print("Loading maps from split JSON structure...")
-            with open(index_path, 'r', encoding='utf-8') as f:
-                index = json.load(f)
-            
-            self.map_data = {}
-            for entry in index.get("maps", []):
-                map_file_path = os.path.join(maps_dir, entry["file"])
-                if os.path.exists(map_file_path):
-                    with open(map_file_path, 'r', encoding='utf-8') as f:
-                        map_data = json.load(f)
-                        self.map_data[entry["id"]] = map_data
-                        print(f"  Loaded: {entry['name']} (id={entry['id']})")
-            
-            # Initial load emit
-            w, h = get_map_dims(self.current_map_id)
-            map_name = get_map_name(self.current_map_id)
-            print(f"Map {self.current_map_id} loaded. Name: {map_name} Size: {w}x{h}")
-            self.emit("MapLoaded", {"map_id": self.current_map_id, "width": w, "height": h, "map_name": map_name})
-        else:
-            # Fallback: Legacy single file
-            map_file = payload.get("map_file", "assets/data/maps.json")
-            full_path = os.path.join(base_dir, map_file)
-
-            if os.path.exists(full_path):
-                 with open(full_path, 'r', encoding='utf-8') as f:
-                     data = json.load(f)
-                     self.map_data = {m["id"]: m for m in data.get("maps", [])}
-                     # Initial load emit
-                     w, h = get_map_dims(self.current_map_id)
-                     map_name = get_map_name(self.current_map_id)
-                     print(f"Map {self.current_map_id} loaded. Name: {map_name} Size: {w}x{h}")
-                     self.emit("MapLoaded", {"map_id": self.current_map_id, "width": w, "height": h, "map_name": map_name})
-            else:
-                 print(f"Map file not found: {full_path}")
+        if not os.path.exists(index_path):
+            print(f"ERROR: Map index not found: {index_path}")
+            return
+        
+        print("Loading maps from split JSON structure...")
+        with open(index_path, 'r', encoding='utf-8') as f:
+            index = json.load(f)
+        
+        self.map_data = {}
+        for entry in index.get("maps", []):
+            map_file_path = os.path.join(maps_dir, entry["file"])
+            if os.path.exists(map_file_path):
+                with open(map_file_path, 'r', encoding='utf-8') as f:
+                    map_data = json.load(f)
+                    self.map_data[entry["id"]] = map_data
+                    print(f"  Loaded: {entry['name']} (id={entry['id']})")
+        
+        # Initial load emit
+        w, h = get_map_dims(self.current_map_id)
+        map_name = get_map_name(self.current_map_id)
+        print(f"Map {self.current_map_id} loaded. Name: {map_name} Size: {w}x{h}")
+        self.emit("MapLoaded", {"map_id": self.current_map_id, "width": w, "height": h, "map_name": map_name})
 
     def validate_move(self, payload: dict):
         """

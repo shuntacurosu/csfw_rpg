@@ -27,60 +27,34 @@ class GameLoop(Concept):
     def init(self, payload: dict):
         """
         Action: init
+        Loads pre-generated sprite sheets from assets/images/.
         """
         import pyxel
         import os
+        
         # Initialize Pyxel (256x256, title, fps=60)
         pyxel.init(256, 256, title="CSFW RPG", fps=60)
+        
         # Load resources
         base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-        # Pyxel sometimes prefers forward slashes or might struggle with mixed
-        img_path = os.path.join(base_dir, "assets", "images", "sprites.png")
-        # Normalize to forward slashes for Pyxel
-        img_path = img_path.replace("\\", "/")
-        print(f"Loading sprite from: {img_path} (Exists: {os.path.exists(img_path)})")
         
-        # Initialize with fallback assets FIRST, so if load fails we still have something
-        self._create_fallback_assets()
-        
-        if os.path.exists(img_path):
-             try:
-                 # Use current API
-                 pyxel.images[0].load(0, 0, img_path)
-                 print("Attempted load. If successful, sprites are updated.")
-             except Exception as e:
-                 print(f"Pyxel load error: {e}")
-                 # Fallback already in place
+        # Load main sprites (Bank 0)
+        sprites_path = os.path.join(base_dir, "assets", "images", "sprites.png").replace("\\", "/")
+        if os.path.exists(sprites_path):
+            pyxel.images[0].load(0, 0, sprites_path)
+            print(f"Loaded sprites: {sprites_path}")
         else:
-             print(f"Warning: Sprite sheet not found at {img_path}")
-             # Fallback already in place
+            raise FileNotFoundError(f"Sprite sheet not found: {sprites_path}")
         
-        # Generate/Load Programmatic Assets
-        print("DEBUG: Starting asset generation...")
-        try:
-            from concepts.enemy_assets import load_enemy_assets
-            load_enemy_assets()
-            print("DEBUG: Enemy sprites loaded.")
-            
-            from concepts.item_assets import load_item_sprites
-            load_item_sprites()
-            print("DEBUG: Item sprites loaded.")
-        except Exception as e:
-            import traceback
-            traceback.print_exc()
-            print(f"Asset Generation Error: {e}")
+        # Load enemy sprites (Bank 1)
+        enemies_path = os.path.join(base_dir, "assets", "images", "enemies.png").replace("\\", "/")
+        if os.path.exists(enemies_path):
+            pyxel.images[1].load(0, 0, enemies_path)
+            print(f"Loaded enemies: {enemies_path}")
+        else:
+            raise FileNotFoundError(f"Enemy sprite sheet not found: {enemies_path}")
 
         self.emit("Initialized", {})
-
-    def _create_fallback_assets(self):
-        import pyxel
-        print("Creating fallback assets...")
-        # 0: Grass (Green) at 0,0
-        pyxel.images[0].rect(0, 0, 16, 16, 11)
-        # 1: Wall (Brown) at 16,0
-        pyxel.images[0].rect(16, 0, 16, 16, 4)
-        # Hero (Red) at 0,16
-        pyxel.images[0].rect(0, 16, 16, 16, 8)
 
     def run(self, payload: dict):
         """
