@@ -4,18 +4,53 @@
 <head>
     <meta charset="UTF-8">
     <title>CSFW RPG - Web Version</title>
-    <script src="https://cdn.jsdelivr.net/gh/kitao/pyxel/wasm/pyxel.js"></script>
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.29.0/full/pyodide.js"></script>
 </head>
 
-<body class="pyxel-scheme">
+<body style="background-color: #1a1a2e; color: white; font-family: monospace; text-align: center; padding-top: 50px;">
+    <div id="loading">
+        <h1>CSFW RPG</h1>
+        <p id="status">Loading Pyodide...</p>
+    </div>
     <script>
-        launchPyxel({
-            root: "https://cdn.jsdelivr.net/gh/shuntacurosu/csfw_rpg@main",
-            command: "play",
-            name: "src.pyxapp",
-            packages: "pyyaml,cs-framework",
-            gamepad: "enabled"
-        });
+        async function main() {
+            const status = document.getElementById('status');
+
+            try {
+                // Load Pyodide
+                status.textContent = 'Loading Pyodide...';
+                const pyodide = await loadPyodide();
+
+                // Install packages via micropip
+                status.textContent = 'Installing packages...';
+                await pyodide.loadPackage('micropip');
+                const micropip = pyodide.pyimport('micropip');
+
+                // Install required packages
+                status.textContent = 'Installing pyyaml...';
+                await micropip.install('pyyaml');
+
+                status.textContent = 'Installing cs-framework...';
+                await micropip.install('cs-framework');
+
+                status.textContent = 'Installing pyxel...';
+                await micropip.install('pyxel');
+
+                // Run the game
+                status.textContent = 'Starting game...';
+                document.getElementById('loading').style.display = 'none';
+
+                // Fetch and run main.py
+                const response = await fetch('https://raw.githubusercontent.com/shuntacurosu/csfw_rpg/main/src/main.py');
+                const code = await response.text();
+                await pyodide.runPythonAsync(code);
+
+            } catch (error) {
+                status.textContent = 'Error: ' + error.message;
+                console.error(error);
+            }
+        }
+        main();
     </script>
 </body>
 
