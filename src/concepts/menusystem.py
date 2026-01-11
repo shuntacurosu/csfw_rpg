@@ -236,8 +236,13 @@ class MenuSystem(Concept):
             pyxel.rectb(mx - 1, my - 1, 130, 130, 1)
             
             if self.world_map:
-                tiles = self.world_map.get("tiles", [])
-                cols = {0: 11, 1: 5, 2: 12, 3: 4, 4: 3, 5: 10, 6: 13, 7: 9, 8: 8, 9: 8}
+                # Support layer-based structure
+                layers = self.world_map.get("layers", {})
+                tiles = layers.get("ground", [])
+                if not tiles:
+                    # Fallback to old 'tiles' key just in case
+                    tiles = self.world_map.get("tiles", [])
+                cols = {0: 11, 1: 5, 2: 12, 3: 4, 4: 3, 5: 10, 6: 13, 7: 9, 8: 8, 9: 8, 64: 8, 65: 8, 66: 8, 67: 8}
                 for ty, row in enumerate(tiles):
                     for tx, tile in enumerate(row):
                         col = cols.get(tile, 0)

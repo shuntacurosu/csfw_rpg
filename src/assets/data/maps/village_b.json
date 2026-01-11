@@ -6,11 +6,11 @@
     "objects": [],
     "portals": [
         {
-            "x": 30,
-            "y": 31,
-            "target_map": 10,
-            "target_x": 8,
-            "target_y": 13
+            "x": 8,
+            "y": 15,
+            "target_map": 1,
+            "target_x": 40,
+            "target_y": 41
         }
     ],
     "encounter_rate": 0.0,
